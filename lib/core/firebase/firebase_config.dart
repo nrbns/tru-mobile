@@ -3,6 +3,8 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'firebase_options.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Firebase initialization and configuration
 class FirebaseConfig {
@@ -56,6 +58,22 @@ class FirebaseConfig {
 
       // Set background message handler
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    }
+
+    // During local debug runs, point Firebase services to the local emulators
+    // if they are available. This allows end-to-end testing without deploying.
+    if (kDebugMode) {
+      try {
+        // Functions emulator (matches the functions emulator default port used here)
+        FirebaseFunctions.instanceFor(region: 'asia-south1')
+            .useFunctionsEmulator('127.0.0.1', 5001);
+
+        // Firestore emulator
+        FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8080);
+      } catch (e) {
+        // If emulator packages aren't available or methods differ, ignore in debug
+        if (kDebugMode) print('Emulator wiring skipped: $e');
+      }
     }
   }
 }

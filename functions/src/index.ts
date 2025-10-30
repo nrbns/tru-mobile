@@ -9,7 +9,11 @@ import { populateSpiritualCalendar } from "./spiritualCalendar";
 import { genkitHello } from "./genkitExample";
 
 // Initialize Firebase Admin and default region early so functions can reference { region }
-admin.initializeApp();
+// Initialize Firebase Admin SDK once. In emulator environments the admin
+// SDK may be initialized by the emulator runtime; guard to avoid duplicate init.
+if (!admin.apps || admin.apps.length === 0) {
+  admin.initializeApp();
+}
 const region = "asia-south1";
 
 // Map Firebase Functions config keys to process.env for compatibility
