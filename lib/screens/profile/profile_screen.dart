@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:truresetx/core/utils/lucide_compat.dart';
+import 'package:go_router/go_router.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/aura_card.dart';
 import '../../widgets/nav_bar.dart';
@@ -110,25 +111,25 @@ class ProfileScreen extends StatelessWidget {
                       icon: LucideIcons.palette,
                       title: 'Theme',
                       subtitle: 'Dark Mode',
-                      onTap: () {},
+                      onTap: () => context.push('/profile/theme'),
                     ),
                     _SettingTile(
                       icon: LucideIcons.bell,
                       title: 'Notifications',
                       subtitle: 'Manage your notifications',
-                      onTap: () {},
+                      onTap: () => context.push('/profile/notifications'),
                     ),
                     _SettingTile(
                       icon: LucideIcons.shield,
                       title: 'Privacy',
                       subtitle: 'Manage your privacy settings',
-                      onTap: () {},
+                      onTap: () => context.push('/profile/privacy'),
                     ),
                     _SettingTile(
                       icon: LucideIcons.activity,
                       title: 'Connected Devices',
                       subtitle: 'Manage connected devices',
-                      onTap: () {},
+                      onTap: () => context.push('/profile/devices'),
                     ),
                     const SizedBox(height: 24),
                     // About Section

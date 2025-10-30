@@ -15,6 +15,11 @@ import 'screens/home/dashboard_screen.dart';
 import 'screens/mind/mind_screen.dart';
 import 'screens/spirit/spirit_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/chat/chatbot_screen.dart';
+import 'screens/profile/theme_settings_screen.dart';
+import 'screens/profile/notifications_settings_screen.dart';
+import 'screens/profile/privacy_settings_screen.dart';
+import 'screens/profile/connected_devices_screen.dart';
 import 'screens/not_found_screen.dart';
 import 'widgets/auth_gate.dart';
 import 'screens/mood/quick_log_screen.dart';
@@ -41,6 +46,7 @@ import 'screens/wisdom/wisdom_legends_screen.dart';
 import 'screens/wisdom/wisdom_detail_screen.dart';
 import 'screens/wisdom/wisdom_tracker_screen.dart';
 import 'screens/spiritual/streaks_detail_screen.dart';
+import 'screens/spiritual/yoga_routine_screen.dart';
 import 'screens/mood/mood_correlation_screen.dart';
 import 'screens/mind/mood_coach_screen.dart';
 import 'screens/mind/guided_sessions_screen.dart';
@@ -50,6 +56,7 @@ import 'screens/mind/results_screen.dart';
 import 'screens/mind/coach_inbox_screen.dart';
 import 'screens/workout/exercise_detail_screen.dart';
 import 'screens/workout/ar_assist_screen.dart';
+import 'screens/workout/workout_generator_wizard_screen.dart';
 import 'screens/nutrition/grocery_list_screen.dart';
 import 'screens/nutrition/fasting_mode_screen.dart';
 
@@ -134,6 +141,10 @@ final GoRouter _router = GoRouter(
           builder: (context, state) => const WorkoutListScreen(),
           routes: [
             GoRoute(
+              path: 'generator',
+              builder: (context, state) => const WorkoutGeneratorWizardScreen(),
+            ),
+            GoRoute(
               path: 'player',
               builder: (context, state) {
                 final extra = state.extra as Map<String, dynamic>?;
@@ -160,6 +171,10 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: 'weekly-progress',
           builder: (context, state) => const WeeklyProgressScreen(),
+        ),
+        GoRoute(
+          path: 'chatbot',
+          builder: (context, state) => const ChatbotScreen(),
         ),
         GoRoute(
           path: 'nutrition-log',
@@ -288,11 +303,33 @@ final GoRouter _router = GoRouter(
           path: 'streaks',
           builder: (context, state) => const StreaksDetailScreen(),
         ),
+        GoRoute(
+          path: 'yoga',
+          builder: (context, state) => const YogaRoutineScreen(),
+        ),
       ],
     ),
     GoRoute(
       path: '/profile',
       builder: (context, state) => const AuthGate(child: ProfileScreen()),
+      routes: [
+        GoRoute(
+          path: 'theme',
+          builder: (context, state) => const ThemeSettingsScreen(),
+        ),
+        GoRoute(
+          path: 'notifications',
+          builder: (context, state) => const NotificationsSettingsScreen(),
+        ),
+        GoRoute(
+          path: 'privacy',
+          builder: (context, state) => const PrivacySettingsScreen(),
+        ),
+        GoRoute(
+          path: 'devices',
+          builder: (context, state) => const ConnectedDevicesScreen(),
+        ),
+      ],
     ),
   ],
 );

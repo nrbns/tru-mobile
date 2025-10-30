@@ -93,6 +93,29 @@ class _YogaRoutineScreenState extends ConsumerState<YogaRoutineScreen> {
                             const SizedBox(height: 6),
                             Text('${s['duration'] ?? 20} min • ${(s['level'] ?? 'beginner')} • ${(s['focus'] ?? 'relaxation')}',
                                 style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                            const SizedBox(height: 12),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  final poses = (s['poses'] as List?)?.whereType<Map>().toList() ?? [];
+                                  final exercises = poses.isNotEmpty
+                                      ? poses.map((p) => {
+                                            'name': p['name'] ?? 'Pose',
+                                            'durationSec': (p['duration_sec'] ?? p['durationSec'] ?? 30) as int,
+                                            'restSec': 15,
+                                            'emoji': '🧘',
+                                          }).toList()
+                                      : null;
+                                  context.push('/home/workouts/player', extra: {
+                                    'name': (s['name'] ?? 'Yoga Session') as String,
+                                    if (exercises != null) 'exercises': exercises,
+                                  });
+                                },
+                                icon: const Icon(Icons.play_arrow),
+                                label: const Text('Start'),
+                              ),
+                            )
                           ],
                         ),
                       ),

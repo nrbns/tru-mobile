@@ -125,6 +125,8 @@ class LucideIcons {
   static const IconData penTool = edit;
   static const IconData arrowDown = chevronLeft;
   static const IconData hand = brain;
+  // Alias for a 'sandwich' icon used in quick actions — map to utensils.
+  static const IconData sandwich = utensils;
   // Backwards-compatible mapping for an icon name used in the repo.
   // The original `lucide_icons` package may not expose `magicWand` in
   // the installed version; map it to `sparkles` as a reasonable fallback.

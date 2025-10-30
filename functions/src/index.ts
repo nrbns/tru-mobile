@@ -11,6 +11,21 @@ import { populateSpiritualCalendar } from "./spiritualCalendar";
 admin.initializeApp();
 const region = "asia-south1";
 
+// Map Firebase Functions config keys to process.env for compatibility
+// so that code paths using process.env continue to work after deploy.
+try {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cfg: any = functions.config?.() || {};
+  if (!process.env.OPENAI_API_KEY && cfg.openai?.key) {
+    process.env.OPENAI_API_KEY = cfg.openai.key as string;
+  }
+  if (!process.env.GEMINI_API_KEY && cfg.gemini?.key) {
+    process.env.GEMINI_API_KEY = cfg.gemini.key as string;
+  }
+} catch {
+  // functions.config() may not be available in local emulation without config set
+}
+
 // Export populateCalendarEvents for deployment
 export { populateCalendarEvents };
 

@@ -6,6 +6,8 @@ import '../../theme/app_colors.dart';
 import '../../core/providers/today_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:lottie/lottie.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 // Removed unused import: today_service is provided via today_provider.
 import '../../core/utils/lucide_compat.dart';
 
@@ -48,12 +50,14 @@ class _WorkoutPlayerScreenState extends ConsumerState<WorkoutPlayerScreen>
       upperBound: 1.1,
     )..repeat(reverse: true);
     _startExercise();
+    WakelockPlus.enable();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _pulseController.dispose();
+    WakelockPlus.disable();
     super.dispose();
   }
 
@@ -238,13 +242,20 @@ class _WorkoutPlayerScreenState extends ConsumerState<WorkoutPlayerScreen>
               ),
             ),
             const SizedBox(height: 24),
-            // Animated exercise emoji
-            ScaleTransition(
-              scale: _pulseController,
-              child: Text(
-                (_isRest ? '🫗' : (current['emoji'] as String? ?? '🏋️')),
-                style: const TextStyle(fontSize: 96),
-              ),
+            // Animated exercise - prefer Lottie, fallback to emoji
+            SizedBox(
+              height: 180,
+              child: _lottieFor(current) != null
+                  ? Lottie.network(_lottieFor(current)!, repeat: true)
+                  : ScaleTransition(
+                      scale: _pulseController,
+                      child: Text(
+                        (_isRest
+                            ? '🫗'
+                            : (current['emoji'] as String? ?? '🏋️')),
+                        style: const TextStyle(fontSize: 96),
+                      ),
+                    ),
             ),
             const SizedBox(height: 16),
             // Exercise name
@@ -343,6 +354,24 @@ class _WorkoutPlayerScreenState extends ConsumerState<WorkoutPlayerScreen>
         ),
       ),
     );
+  }
+
+  String? _lottieFor(Map<String, dynamic> ex) {
+    if (_isRest) return 'https://assets8.lottiefiles.com/packages/lf20_8krsf8.json';
+    final name = (ex['name'] as String? ?? '').toLowerCase();
+    if (name.contains('jump') || name.contains('jacks')) {
+      return 'https://assets9.lottiefiles.com/packages/lf20_dkt4s9jn.json';
+    }
+    if (name.contains('push')) {
+      return 'https://assets2.lottiefiles.com/packages/lf20_dyq0qz3v.json';
+    }
+    if (name.contains('squat')) {
+      return 'https://assets10.lottiefiles.com/packages/lf20_cwqf5i6l.json';
+    }
+    if (name.contains('plank')) {
+      return 'https://assets1.lottiefiles.com/packages/lf20_lh9z3b.json';
+    }
+    return null;
   }
 
   Future<void> _editTimers(Map<String, dynamic> current) async {

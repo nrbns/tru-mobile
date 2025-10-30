@@ -22,6 +22,20 @@ class QuickActions extends StatelessWidget {
       route: '/home/water-tracker',
     ),
     _ActionItem(
+      id: 'nutrition-log',
+      label: 'Nutrition',
+      icon: LucideIcons.utensils,
+      color: AppColors.success,
+      route: '/home/nutrition-log',
+    ),
+    _ActionItem(
+      id: 'meal-planner',
+      label: 'Meal Plan',
+      icon: LucideIcons.sandwich,
+      color: AppColors.warning,
+      route: '/home/meal-planner',
+    ),
+    _ActionItem(
       id: 'workouts',
       label: 'Workout',
       icon: LucideIcons.dumbbell,
