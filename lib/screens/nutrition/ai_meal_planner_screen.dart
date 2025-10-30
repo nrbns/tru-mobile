@@ -76,7 +76,7 @@ class AIMealPlannerScreen extends ConsumerWidget {
                                   padding: const EdgeInsets.only(bottom: 8),
                                   child: Row(
                                     children: [
-                                      const Icon(LucideIcons.utensils,
+                                      const Icon(LucideIcons.mealPlanner,
                                           color: AppColors.primary, size: 18),
                                       const SizedBox(width: 8),
                                       Expanded(

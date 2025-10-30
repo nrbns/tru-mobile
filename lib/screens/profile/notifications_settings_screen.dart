@@ -6,10 +6,12 @@ class NotificationsSettingsScreen extends StatefulWidget {
   const NotificationsSettingsScreen({super.key});
 
   @override
-  State<NotificationsSettingsScreen> createState() => _NotificationsSettingsScreenState();
+  State<NotificationsSettingsScreen> createState() =>
+      _NotificationsSettingsScreenState();
 }
 
-class _NotificationsSettingsScreenState extends State<NotificationsSettingsScreen> {
+class _NotificationsSettingsScreenState
+    extends State<NotificationsSettingsScreen> {
   bool _dailyReminders = true;
   bool _streakAlerts = true;
   bool _aiTips = false;
@@ -25,35 +27,39 @@ class _NotificationsSettingsScreenState extends State<NotificationsSettingsScree
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Notifications', style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Notifications', style: TextStyle(color: Colors.white)),
       ),
       body: ListView(
         children: [
           SwitchListTile(
             value: _dailyReminders,
             onChanged: (v) => setState(() => _dailyReminders = v),
-            title: const Text('Daily reminders', style: TextStyle(color: Colors.white)),
-            subtitle: const Text('Motivation and check-ins', style: TextStyle(color: Colors.grey)),
-            activeColor: AppColors.primary,
+            title: const Text('Daily reminders',
+                style: TextStyle(color: Colors.white)),
+            subtitle: const Text('Motivation and check-ins',
+                style: TextStyle(color: Colors.grey)),
+            activeThumbColor: AppColors.primary,
           ),
           SwitchListTile(
             value: _streakAlerts,
             onChanged: (v) => setState(() => _streakAlerts = v),
-            title: const Text('Streak alerts', style: TextStyle(color: Colors.white)),
-            subtitle: const Text('Celebrate milestones and prevent drops', style: TextStyle(color: Colors.grey)),
-            activeColor: AppColors.primary,
+            title: const Text('Streak alerts',
+                style: TextStyle(color: Colors.white)),
+            subtitle: const Text('Celebrate milestones and prevent drops',
+                style: TextStyle(color: Colors.grey)),
+            activeThumbColor: AppColors.primary,
           ),
           SwitchListTile(
             value: _aiTips,
             onChanged: (v) => setState(() => _aiTips = v),
             title: const Text('AI tips', style: TextStyle(color: Colors.white)),
-            subtitle: const Text('Personalized suggestions', style: TextStyle(color: Colors.grey)),
-            activeColor: AppColors.primary,
+            subtitle: const Text('Personalized suggestions',
+                style: TextStyle(color: Colors.grey)),
+            activeThumbColor: AppColors.primary,
           ),
         ],
       ),
     );
   }
 }
-
-

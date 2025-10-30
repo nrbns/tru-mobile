@@ -59,6 +59,13 @@ import 'screens/workout/ar_assist_screen.dart';
 import 'screens/workout/workout_generator_wizard_screen.dart';
 import 'screens/nutrition/grocery_list_screen.dart';
 import 'screens/nutrition/fasting_mode_screen.dart';
+import 'screens/nutrition/nutrition_hub_screen.dart';
+import 'screens/home/comprehensive_dashboard_screen.dart';
+import 'screens/analytics/enhanced_analytics_screen.dart';
+// removed unused imports: community_feed_screen, subscription_screen, wisdom_reflection_screen
+import 'screens/workout/workout_action_screen.dart';
+import 'screens/workout/workout_log_screen.dart';
+import 'screens/nutrition/nutrition_log_with_snap_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -162,11 +169,72 @@ final GoRouter _router = GoRouter(
               path: 'ar-assist',
               builder: (context, state) => const ARAssistScreen(),
             ),
+            GoRoute(
+              path: 'action',
+              builder: (context, state) {
+                // Parse required parameters from query params or state.extra
+                final qp = state.uri.queryParameters;
+                final workoutId = qp['workoutId'] ?? '';
+                final workoutName = qp['workoutName'] ?? 'Workout';
+                final duration = qp['duration'] ?? '';
+                final difficulty = qp['difficulty'] ?? '';
+                final calories = qp['calories'] ?? '';
+                final emoji = qp['emoji'] ?? '';
+                // Allow passing exercises via state.extra as either a List or a Map containing 'exercises'
+                List<Map<String, dynamic>>? exercises;
+                final extra = state.extra;
+                if (extra is Map<String, dynamic> &&
+                    extra['exercises'] is List) {
+                  exercises = List<Map<String, dynamic>>.from(
+                      extra['exercises'] as List);
+                } else if (extra is List) {
+                  exercises = List<Map<String, dynamic>>.from(extra);
+                }
+
+                return WorkoutActionScreen(
+                  workoutId: workoutId,
+                  workoutName: workoutName,
+                  duration: duration,
+                  difficulty: difficulty,
+                  calories: calories,
+                  emoji: emoji,
+                  exercises: exercises,
+                );
+              },
+            ),
+            GoRoute(
+              path: 'log',
+              builder: (context, state) {
+                final workoutPlanId =
+                    state.uri.queryParameters['workoutPlanId'] ?? '';
+                List<Map<String, dynamic>> exercises = [];
+                final extra = state.extra;
+                if (extra is Map<String, dynamic> &&
+                    extra['exercises'] is List) {
+                  exercises = List<Map<String, dynamic>>.from(
+                      extra['exercises'] as List);
+                } else if (extra is List) {
+                  exercises = List<Map<String, dynamic>>.from(extra);
+                }
+                return WorkoutLogScreen(
+                  workoutPlanId: workoutPlanId,
+                  exercises: exercises,
+                );
+              },
+            ),
           ],
         ),
         GoRoute(
           path: 'water-tracker',
           builder: (context, state) => const WaterTrackerScreen(),
+        ),
+        GoRoute(
+          path: 'comprehensive-dashboard',
+          builder: (context, state) => const ComprehensiveDashboardScreen(),
+        ),
+        GoRoute(
+          path: 'enhanced-analytics',
+          builder: (context, state) => const EnhancedAnalyticsScreen(),
         ),
         GoRoute(
           path: 'weekly-progress',
@@ -177,8 +245,20 @@ final GoRouter _router = GoRouter(
           builder: (context, state) => const ChatbotScreen(),
         ),
         GoRoute(
+          path: 'nutrition-log-snap',
+          builder: (context, state) => const NutritionLogWithSnapScreen(),
+        ),
+        GoRoute(
           path: 'nutrition-log',
           builder: (context, state) => const NutritionLogScreen(),
+        ),
+        GoRoute(
+          path: 'meal-planner',
+          builder: (context, state) => const AIMealPlannerScreen(),
+        ),
+        GoRoute(
+          path: 'nutrition',
+          builder: (context, state) => const NutritionHubScreen(),
         ),
         GoRoute(
           path: 'meal-planner',

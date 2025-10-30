@@ -24,6 +24,9 @@ class LucideIcons {
   static const IconData trophy = orig.LucideIcons.trophy;
   static const IconData trendingUp = orig.LucideIcons.trendingUp;
   static const IconData droplet = orig.LucideIcons.droplet;
+  // Nutrition-related icons
+  static const IconData nutrition = orig.LucideIcons.apple;
+  static const IconData mealPlanner = orig.LucideIcons.calendarDays;
   static const IconData zap = orig.LucideIcons.zap;
   static const IconData award = orig.LucideIcons.award;
   static const IconData dumbbell = orig.LucideIcons.dumbbell;

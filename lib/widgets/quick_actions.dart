@@ -24,14 +24,14 @@ class QuickActions extends StatelessWidget {
     _ActionItem(
       id: 'nutrition-log',
       label: 'Nutrition',
-      icon: LucideIcons.utensils,
+      icon: LucideIcons.nutrition,
       color: AppColors.success,
       route: '/home/nutrition-log',
     ),
     _ActionItem(
       id: 'meal-planner',
       label: 'Meal Plan',
-      icon: LucideIcons.sandwich,
+      icon: LucideIcons.mealPlanner,
       color: AppColors.warning,
       route: '/home/meal-planner',
     ),

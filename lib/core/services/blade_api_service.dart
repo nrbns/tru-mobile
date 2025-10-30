@@ -38,7 +38,8 @@ class BladeApiService {
     throw Exception('Blade coach failed: ${res.statusCode} ${res.body}');
   }
 
-  Future<void> ingest({required String type, required Map<String, dynamic> payload}) async {
+  Future<void> ingest(
+      {required String type, required Map<String, dynamic> payload}) async {
     final token = await _requireIdToken();
     final uri = Uri.parse('$baseUrl/progress/ingest');
     final res = await http.post(
@@ -59,8 +60,11 @@ class BladeApiService {
     if (user == null) {
       throw StateError('BladeApiService: no authenticated user');
     }
-    return await user.getIdToken();
+    // getIdToken can return a nullable String depending on the platform
+    final String? token = await user.getIdToken();
+    if (token == null || token.isEmpty) {
+      throw StateError('BladeApiService: failed to obtain id token');
+    }
+    return token;
   }
 }
-
-

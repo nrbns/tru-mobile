@@ -93,7 +93,7 @@ class EnhancedAnalyticsScreen extends ConsumerWidget {
                             _buildCorrelationItem(
                               'Nutrition',
                               correlations['nutrition'] ?? 0.0,
-                              LucideIcons.apple,
+                              LucideIcons.nutrition,
                               AppColors.nutritionColor,
                             ),
                             const SizedBox(height: 12),

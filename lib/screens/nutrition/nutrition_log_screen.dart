@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/app_colors.dart';
 import '../../core/providers/nutrition_provider.dart';
+import '../../core/providers/auth_provider.dart';
 // Removed unused import: nutrition_service is not used directly in this widget.
 
 class NutritionLogScreen extends ConsumerWidget {
@@ -104,7 +105,7 @@ class NutritionLogScreen extends ConsumerWidget {
                           children: [
                             Row(
                               children: [
-                                const Icon(LucideIcons.utensils,
+                                const Icon(LucideIcons.mealPlanner,
                                     color: AppColors.primary, size: 18),
                                 const SizedBox(width: 8),
                                 Text(
@@ -175,6 +176,34 @@ class NutritionLogScreen extends ConsumerWidget {
   }
 
   Future<void> _openQuickAdd(BuildContext context, WidgetRef ref) async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null) {
+      // Prompt user to sign in before allowing meal logging
+      final shouldSignIn = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Sign in required',
+              style: TextStyle(color: Colors.white)),
+          content: const Text(
+              'You need to sign in to save meals to your account.',
+              style: TextStyle(color: Colors.white70)),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Sign in')),
+          ],
+        ),
+      );
+      if (shouldSignIn == true) {
+        // Navigate to sign-in screen
+        if (context.mounted) context.push('/sign-in');
+      }
+      return;
+    }
     final proteinCtrl = TextEditingController();
     final carbsCtrl = TextEditingController();
     final fatCtrl = TextEditingController();
@@ -220,26 +249,34 @@ class NutritionLogScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () async {
-                    final service = ref.read(nutritionServiceProvider);
-                    final kcal = int.tryParse(kcalCtrl.text.trim()) ?? 0;
-                    final p = int.tryParse(proteinCtrl.text.trim()) ?? 0;
-                    final c = int.tryParse(carbsCtrl.text.trim()) ?? 0;
-                    final f = int.tryParse(fatCtrl.text.trim()) ?? 0;
-                    await service.logMeal(
-                      items: [
-                        {
-                          'name': 'Custom Meal',
-                          'kcal': kcal,
-                          'protein': p,
-                          'carbs': c,
-                          'fat': f
-                        },
-                      ],
-                      note: noteCtrl.text.trim().isEmpty
-                          ? null
-                          : noteCtrl.text.trim(),
-                    );
-                    if (context.mounted) Navigator.of(ctx).pop();
+                    final messenger = ScaffoldMessenger.of(context);
+                    try {
+                      final service = ref.read(nutritionServiceProvider);
+                      final kcal = int.tryParse(kcalCtrl.text.trim()) ?? 0;
+                      final p = int.tryParse(proteinCtrl.text.trim()) ?? 0;
+                      final c = int.tryParse(carbsCtrl.text.trim()) ?? 0;
+                      final f = int.tryParse(fatCtrl.text.trim()) ?? 0;
+                      await service.logMeal(
+                        items: [
+                          {
+                            'name': 'Custom Meal',
+                            'kcal': kcal,
+                            'protein': p,
+                            'carbs': c,
+                            'fat': f
+                          },
+                        ],
+                        note: noteCtrl.text.trim().isEmpty
+                            ? null
+                            : noteCtrl.text.trim(),
+                      );
+                      if (context.mounted) Navigator.of(ctx).pop();
+                      messenger.showSnackBar(
+                          const SnackBar(content: Text('Meal saved')));
+                    } catch (e) {
+                      messenger.showSnackBar(
+                          SnackBar(content: Text('Failed to save meal: $e')));
+                    }
                   },
                   icon: const Icon(LucideIcons.save),
                   label: const Text('Save Meal'),

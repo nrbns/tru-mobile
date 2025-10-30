@@ -6,6 +6,7 @@ import { generateMeditation, aiTherapyChat, aiCrisisCheckin } from "./mentalHeal
 import { seedSpiritualData } from "./seedSpiritualData";
 import { seedAllFeaturesData } from "./seedAllFeaturesData";
 import { populateSpiritualCalendar } from "./spiritualCalendar";
+import { genkitHello } from "./genkitExample";
 
 // Initialize Firebase Admin and default region early so functions can reference { region }
 admin.initializeApp();
@@ -13,14 +14,18 @@ const region = "asia-south1";
 
 // Map Firebase Functions config keys to process.env for compatibility
 // so that code paths using process.env continue to work after deploy.
+// Note: firebase-functions v2 may not expose a typed `config` method. Cast to any to be resilient.
 try {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cfg: any = functions.config?.() || {};
+  const cfg: any = (functions as any).config?.() || {};
   if (!process.env.OPENAI_API_KEY && cfg.openai?.key) {
     process.env.OPENAI_API_KEY = cfg.openai.key as string;
   }
   if (!process.env.GEMINI_API_KEY && cfg.gemini?.key) {
     process.env.GEMINI_API_KEY = cfg.gemini.key as string;
+  }
+  if (!process.env.GENAI_API_KEY && cfg.genai?.key) {
+    process.env.GENAI_API_KEY = cfg.genai.key as string;
   }
 } catch {
   // functions.config() may not be available in local emulation without config set
@@ -28,6 +33,9 @@ try {
 
 // Export populateCalendarEvents for deployment
 export { populateCalendarEvents };
+
+// Export genkit example function
+export { genkitHello };
 
 // Export mental health functions
 export { generateMeditation, aiTherapyChat, aiCrisisCheckin };
@@ -794,87 +802,7 @@ export const coachCheckin = functions.https.onCall(
   }
 );
 
-/**
- * Chat Completion - ChatGPT API with RAG
- */
-export const chatCompletion = functions.https.onCall(
-  { region },
-  async (request) => {
-    const uid = request.auth?.uid;
-    if (!uid) {
-      throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
-    }
-
-    const { message, history = [], context = "" } = request.data;
-
-    if (!message || typeof message !== "string") {
-      throw new functions.https.HttpsError("invalid-argument", "Message is required");
-    }
-
-    try {
-      // Get OpenAI API key from environment variables (Secret Manager)
-      // Set this in Firebase: firebase functions:secrets:set OPENAI_API_KEY
-  const openaiApiKey = process.env.OPENAI_API_KEY;
-      
-      if (!openaiApiKey) {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          "OpenAI API key not configured"
-        );
-      }
-
-      // Build conversation history with context
-      const messages: any[] = [
-        {
-          role: "system",
-          content: `You are TruResetX AI Wellness Coach. You help users with their mental health, nutrition, workouts, and spiritual practices. 
-${context ? `\nContext from user's data:\n${context}\n\nUse this context to provide personalized, data-driven insights.` : ""}
-Be empathetic, supportive, and provide actionable advice. Keep responses concise but helpful.`,
-        },
-        ...history.map((h: any) => ({
-          role: h.role,
-          content: h.content,
-        })),
-        {
-          role: "user",
-          content: message,
-        },
-      ];
-
-      // Call OpenAI API
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${openaiApiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini", // or "gpt-4" for better quality
-          messages: messages,
-          temperature: 0.7,
-          max_tokens: 500,
-        }),
-      });
-
-      if (!response.ok) {
-        const error: any = await response.json();
-        throw new Error(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
-      }
-
-      const data: any = await response.json() as any;
-      const assistantMessage = data.choices[0]?.message?.content || "I apologize, I couldn't generate a response.";
-
-      return {
-        content: assistantMessage,
-        model: data.model || "gpt-4o-mini",
-        tokens: data.usage?.total_tokens || 0,
-      };
-    } catch (error: any) {
-      console.error("Chat completion error:", error);
-      throw new functions.https.HttpsError("internal", error.message || "Failed to get AI response");
-    }
-  }
-);
+// (Duplicate chatCompletion definition removed; consolidated implementation exists earlier.)
 
 /**
  * Analyze Voice Transcript - CBT analysis using ChatGPT/Gemini
@@ -1680,122 +1608,7 @@ export const recognizeMeal = functions.https.onCall(
   }
 );
 
-/**
- * Domain-Aware Chat - Enhanced AI coach with domain detection
- */
-export const domainAwareChat = functions.https.onCall(
-  { region },
-  async (request) => {
-    const uid = request.auth?.uid;
-    if (!uid) {
-      throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
-    }
-
-    const { message, domain, system_prompt, context, history = [] } = request.data;
-
-    if (!message || typeof message !== "string") {
-      throw new functions.https.HttpsError("invalid-argument", "Message is required");
-    }
-
-    try {
-  const openaiApiKey = process.env.OPENAI_API_KEY;
-  const geminiApiKey = process.env.GEMINI_API_KEY;
-
-      if (!openaiApiKey && !geminiApiKey) {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          "AI API key not configured"
-        );
-      }
-
-      const useGemini = !openaiApiKey && geminiApiKey;
-      const apiKey = useGemini ? geminiApiKey : openaiApiKey;
-
-      // Build messages
-      const messages: any[] = [];
-      
-      if (system_prompt) {
-        messages.push({ role: "system", content: system_prompt });
-      }
-
-      if (context) {
-        messages.push({
-          role: "system",
-          content: `User context: ${JSON.stringify(context)}`,
-        });
-      }
-
-      if (history && history.length > 0) {
-        messages.push(...history.map((h: any) => ({
-          role: h.role || "user",
-          content: h.content || "",
-        })));
-      }
-
-      messages.push({ role: "user", content: message });
-
-      if (useGemini) {
-        const geminiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: system_prompt + "\n\nUser: " + message }] }],
-            }),
-          }
-        );
-
-        if (!geminiResponse.ok) {
-          throw new Error(`Gemini API error: ${geminiResponse.statusText}`);
-        }
-
-        const geminiData: any = await geminiResponse.json();
-        const responseText = geminiData.candidates[0]?.content?.parts[0]?.text || "I apologize, I couldn't generate a response.";
-
-        return {
-          content: responseText,
-          domain: domain || "general",
-          model: "gemini-pro",
-          suggestions: [],
-        };
-      } else {
-  const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: messages,
-            temperature: 0.7,
-            max_tokens: 500,
-          }),
-        });
-
-        if (!openaiResponse.ok) {
-          const error: any = await openaiResponse.json();
-          throw new Error(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
-        }
-
-        const openaiData: any = await openaiResponse.json();
-        const assistantMessage = openaiData.choices[0]?.message?.content || "I apologize, I couldn't generate a response.";
-
-        return {
-          content: assistantMessage,
-          domain: domain || "general",
-          model: openaiData.model || "gpt-4o-mini",
-          tokens: openaiData.usage?.total_tokens || 0,
-          suggestions: [],
-        };
-      }
-    } catch (error: any) {
-      console.error("Domain-aware chat error:", error);
-      throw new functions.https.HttpsError("internal", error.message || "Failed to get AI response");
-    }
-  }
-);
+// (Duplicate domainAwareChat definition removed; consolidated implementation exists earlier.)
 
 /**
  * Generate Daily Wisdom - AI-generated spiritual content

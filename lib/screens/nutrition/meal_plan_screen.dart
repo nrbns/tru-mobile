@@ -83,7 +83,7 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(LucideIcons.utensils,
+                          Icon(LucideIcons.mealPlanner,
                               color: Colors.grey[600], size: 64),
                           const SizedBox(height: 16),
                           Text(
@@ -296,7 +296,7 @@ class _MealPlanScreenState extends ConsumerState<MealPlanScreen> {
       case 'dinner':
         return LucideIcons.moon;
       default:
-        return LucideIcons.utensils;
+        return LucideIcons.mealPlanner;
     }
   }
 

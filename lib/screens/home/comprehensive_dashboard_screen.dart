@@ -560,14 +560,14 @@ class ComprehensiveDashboardScreen extends ConsumerWidget {
             _buildQuickActionButton(
               context,
               'Nutrition',
-              LucideIcons.utensils,
+              LucideIcons.nutrition,
               AppColors.nutritionColor,
               () => context.push('/home/nutrition-log'),
             ),
             _buildQuickActionButton(
               context,
               'Meal Plan',
-              LucideIcons.sandwich,
+              LucideIcons.mealPlanner,
               AppColors.warning,
               () => context.push('/home/meal-planner'),
             ),

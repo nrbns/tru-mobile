@@ -57,6 +57,18 @@ class NavBar extends ConsumerWidget {
                 },
               ),
               _NavItem(
+                icon: LucideIcons.nutrition,
+                label: 'Nutrition',
+                route: '/home/nutrition',
+                isActive: currentTab == 'nutrition',
+                onTap: () {
+                  ref
+                      .read(appStateProvider.notifier)
+                      .setCurrentTab('nutrition');
+                  context.go('/home/nutrition');
+                },
+              ),
+              _NavItem(
                 icon: LucideIcons.user,
                 label: 'Profile',
                 route: '/profile',
