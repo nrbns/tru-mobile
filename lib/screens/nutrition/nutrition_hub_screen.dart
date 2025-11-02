@@ -11,10 +11,11 @@ class NutritionHubScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
@@ -46,7 +47,7 @@ class NutritionHubScreen extends StatelessWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 2.2,
+                childAspectRatio: 1.4,
                 children: [
                   _tile(context, 'Meal Planner', LucideIcons.mealPlanner,
                       AppColors.nutritionColor, '/home/meal-planner'),

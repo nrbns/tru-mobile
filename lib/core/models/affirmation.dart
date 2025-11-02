@@ -34,5 +34,3 @@ class Affirmation {
         'category': category,
       };
 }
-
-

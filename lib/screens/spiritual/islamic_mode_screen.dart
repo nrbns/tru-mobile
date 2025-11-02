@@ -25,7 +25,11 @@ class IslamicModeScreen extends ConsumerWidget {
                     onPressed: () => context.pop(),
                   ),
                   const Expanded(
-                    child: Text('Islamic Mode', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
+                    child: Text('Islamic Mode',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -41,12 +45,20 @@ class IslamicModeScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Daily Ayah', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                                const Text('Daily Ayah',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600)),
                                 const SizedBox(height: 8),
-                                Text((v.first['text'] ?? '') as String, style: TextStyle(color: Colors.grey[300], height: 1.6)),
+                                Text((v.first['text'] ?? '') as String,
+                                    style: TextStyle(
+                                        color: Colors.grey[300], height: 1.6)),
                                 if (v.first['translation'] != null) ...[
                                   const SizedBox(height: 8),
-                                  Text((v.first['translation'] ?? '') as String, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                                  Text((v.first['translation'] ?? '') as String,
+                                      style: TextStyle(
+                                          color: Colors.grey[400],
+                                          fontSize: 12)),
                                 ],
                               ],
                             ),

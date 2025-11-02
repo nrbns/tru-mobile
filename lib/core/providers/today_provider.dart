@@ -15,4 +15,3 @@ final todayProvider = FutureProvider<TodayModel>((ref) async {
   final todayService = ref.watch(todayServiceProvider);
   return await todayService.getToday();
 });
-

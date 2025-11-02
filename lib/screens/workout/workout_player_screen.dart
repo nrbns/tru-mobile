@@ -357,7 +357,9 @@ class _WorkoutPlayerScreenState extends ConsumerState<WorkoutPlayerScreen>
   }
 
   String? _lottieFor(Map<String, dynamic> ex) {
-    if (_isRest) return 'https://assets8.lottiefiles.com/packages/lf20_8krsf8.json';
+    if (_isRest) {
+      return 'https://assets8.lottiefiles.com/packages/lf20_8krsf8.json';
+    }
     final name = (ex['name'] as String? ?? '').toLowerCase();
     if (name.contains('jump') || name.contains('jacks')) {
       return 'https://assets9.lottiefiles.com/packages/lf20_dkt4s9jn.json';

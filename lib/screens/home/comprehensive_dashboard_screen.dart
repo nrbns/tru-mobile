@@ -6,6 +6,9 @@ import '../../theme/app_colors.dart';
 import '../../widgets/aura_card.dart';
 import '../../widgets/progress_ring.dart';
 import '../../widgets/nav_bar.dart';
+import '../../widgets/agent_wrapper.dart';
+import '../../widgets/karma_badge.dart';
+import '../../widgets/energy_pulse_indicator.dart';
 import '../../core/providers/today_provider.dart';
 import '../../core/providers/activity_provider.dart';
 import '../../core/providers/gamification_provider.dart';
@@ -29,9 +32,10 @@ class ComprehensiveDashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
+      body: AgentWrapper(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
           children: [
             // Header
             Container(
@@ -65,9 +69,18 @@ class ComprehensiveDashboardScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.settings, color: Colors.white),
-                    onPressed: () => context.push('/profile'),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const EnergyPulseIndicator(),
+                      const SizedBox(width: 8),
+                      const KarmaBadge(),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(LucideIcons.settings, color: Colors.white),
+                        onPressed: () => context.push('/profile'),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -184,8 +197,66 @@ class ComprehensiveDashboardScreen extends ConsumerWidget {
                     // Progress Rings
                     todayAsync.when(
                       data: (today) => _buildProgressRings(today),
-                      loading: () => const CircularProgressIndicator(),
-                      error: (_, __) => const SizedBox.shrink(),
+                      loading: () => Row(
+                        children: [
+                          Expanded(
+                            child: ProgressRing(
+                              progress: 0,
+                              label: 'Mood',
+                              color: AppColors.moodColor,
+                              icon: LucideIcons.heart,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ProgressRing(
+                              progress: 0,
+                              label: 'Water',
+                              color: AppColors.nutritionColor,
+                              icon: LucideIcons.droplet,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ProgressRing(
+                              progress: 0,
+                              label: 'Workout',
+                              color: AppColors.workoutColor,
+                              icon: LucideIcons.dumbbell,
+                            ),
+                          ),
+                        ],
+                      ),
+                      error: (_, __) => Row(
+                        children: [
+                          Expanded(
+                            child: ProgressRing(
+                              progress: 0,
+                              label: 'Mood',
+                              color: AppColors.moodColor,
+                              icon: LucideIcons.heart,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ProgressRing(
+                              progress: 0,
+                              label: 'Water',
+                              color: AppColors.nutritionColor,
+                              icon: LucideIcons.droplet,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ProgressRing(
+                              progress: 0,
+                              label: 'Workout',
+                              color: AppColors.workoutColor,
+                              icon: LucideIcons.dumbbell,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
 
@@ -207,6 +278,7 @@ class ComprehensiveDashboardScreen extends ConsumerWidget {
             const NavBar(),
           ],
         ),
+      ),
       ),
     );
   }
@@ -346,33 +418,44 @@ class ComprehensiveDashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildProgressRings(dynamic today) {
+    // Calculate progress percentages (0-100)
+    final moodProgress = today.mood.latest != null
+        ? (today.mood.latest! / 10 * 100).clamp(0.0, 100.0)
+        : 0.0;
+    final waterProgress = (today.waterMl / 2000 * 100).clamp(0.0, 100.0);
+    final workoutProgress = today.workouts.target > 0
+        ? (today.workouts.done / today.workouts.target * 100).clamp(0.0, 100.0)
+        : 0.0;
+    
     return Row(
       children: [
         Expanded(
           child: ProgressRing(
-            progress: (today.mood.latest / 10).clamp(0.0, 1.0),
+            progress: moodProgress,
             label: 'Mood',
             color: AppColors.moodColor,
             icon: LucideIcons.heart,
+            glow: moodProgress > 0,
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
           child: ProgressRing(
-            progress: (today.waterMl / 3000).clamp(0.0, 1.0),
+            progress: waterProgress,
             label: 'Water',
             color: AppColors.nutritionColor,
             icon: LucideIcons.droplet,
+            glow: waterProgress > 0,
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
           child: ProgressRing(
-            progress:
-                (today.workouts.done / today.workouts.target).clamp(0.0, 1.0),
+            progress: workoutProgress,
             label: 'Workout',
             color: AppColors.workoutColor,
             icon: LucideIcons.dumbbell,
+            glow: workoutProgress > 0,
           ),
         ),
       ],
@@ -532,6 +615,7 @@ class ComprehensiveDashboardScreen extends ConsumerWidget {
   Widget _buildQuickActions(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         const Text(
           'Quick Actions',
@@ -545,8 +629,8 @@ class ComprehensiveDashboardScreen extends ConsumerWidget {
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 3,
-          childAspectRatio: 1.2,
+          crossAxisCount: 2,
+          childAspectRatio: 1.4,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
           children: [

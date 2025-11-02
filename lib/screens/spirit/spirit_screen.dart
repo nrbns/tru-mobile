@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/aura_card.dart';
 import '../../widgets/nav_bar.dart';
+import '../../widgets/agent_wrapper.dart';
 
 class SpiritScreen extends StatelessWidget {
   const SpiritScreen({super.key});
@@ -12,7 +13,8 @@ class SpiritScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
+      body: AgentWrapper(
+        child: SafeArea(
         bottom: false,
         child: Column(
           children: [
@@ -97,7 +99,7 @@ class SpiritScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     // Wisdom & Legends Card
                     GestureDetector(
-                      onTap: () => context.push('/spirit/wisdom-daily'),
+                      onTap: () => context.push('/spirit/wisdom-legends'),
                       child: AuraCard(
                         variant: AuraCardVariant.spiritual,
                         glow: true,
@@ -479,6 +481,7 @@ class SpiritScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
       bottomNavigationBar: const NavBar(),
     );

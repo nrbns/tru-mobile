@@ -15,10 +15,14 @@ class WorkoutSessionService {
 
   CollectionReference get _sessionsRef {
     final uid = _requireUid();
-    return _firestore.collection('users').doc(uid).collection('workout_sessions');
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('workout_sessions');
   }
 
-  Future<String> startSession({required String name, List<Map<String, dynamic>>? exercises}) async {
+  Future<String> startSession(
+      {required String name, List<Map<String, dynamic>>? exercises}) async {
     final doc = await _sessionsRef.add({
       'name': name,
       'started_at': FieldValue.serverTimestamp(),
@@ -41,5 +45,3 @@ class WorkoutSessionService {
     }, SetOptions(merge: true));
   }
 }
-
-

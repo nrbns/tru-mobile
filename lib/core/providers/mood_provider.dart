@@ -9,4 +9,3 @@ final moodLogsStreamProvider = StreamProvider<List<MoodLogModel>>((ref) {
   final moodService = ref.watch(moodServiceProvider);
   return moodService.streamMoodLogs(limit: 30);
 });
-

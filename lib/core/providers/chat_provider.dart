@@ -6,13 +6,14 @@ final aiChatServiceProvider = Provider<AIChatService>((ref) {
   return AIChatService();
 });
 
-final chatMessagesProvider = StreamProvider.family<List<ChatMessageModel>, String>((ref, sessionId) {
+final chatMessagesProvider =
+    StreamProvider.family<List<ChatMessageModel>, String>((ref, sessionId) {
   final chatService = ref.watch(aiChatServiceProvider);
   return chatService.streamMessages(sessionId);
 });
 
-final chatSessionsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final chatSessionsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final chatService = ref.watch(aiChatServiceProvider);
   return await chatService.getChatSessions();
 });
-

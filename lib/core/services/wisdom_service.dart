@@ -1,336 +1,235 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import '../models/wisdom_model.dart';
-import 'mood_service.dart';
+import 'package:http/http.dart' as http;
+import '../models/daily_wisdom.dart';
 
-/// Service for Wisdom & Legends module
-/// Handles daily wisdom, library, reflections, and AI integration
+/// WisdomService: provides read/write access to the wisdom collection and
+/// supporting user-scoped behaviour. Implemented with conservative,
+/// defensive APIs so UI screens can call these methods without crashing.
 class WisdomService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'asia-south1');
-  final MoodService _moodService = MoodService();
+  final FirebaseFirestore _db;
+  final FirebaseAuth _auth;
+  final Uri? functionEndpoint;
 
-  String _requireUid() {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) {
-      throw StateError('WisdomService: no authenticated user');
-    }
-    return currentUser.uid;
-  }
+  WisdomService(this._db, this._auth, {this.functionEndpoint});
 
-  CollectionReference get _wisdomRef => _firestore.collection('wisdom');
-
-  CollectionReference get _wisdomReflectionsRef {
-    final uid = _requireUid();
-    return _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('wisdom_reflections');
-  }
-
-  /// Get daily wisdom personalized by mood and spiritual path
-  Future<WisdomModel> getDailyWisdom({
-    String? userMood,
+  /// Primary API used by DailyWisdom screen. Tries a Cloud Function first
+  /// (if configured), then a curated `wisdom_daily/today` doc, then a random
+  /// published doc from `wisdom`. Falls back to a local in-memory sample.
+  Future<DailyWisdom> getDailyWisdom({
+    String? mood,
     String? spiritualPath,
     String? category,
   }) async {
-    try {
-      // Get user's current mood if not provided
-      if (userMood == null) {
-        final recentMoods = await _moodService.getMoodLogs(limit: 1);
-        if (recentMoods.isNotEmpty) {
-          final mood = recentMoods.first.score;
-          if (mood < 4) {
-            userMood = 'sad';
-          } else if (mood < 6) {
-            userMood = 'neutral';
-          } else if (mood < 8) {
-            userMood = 'happy';
-          } else {
-            userMood = 'energized';
-          }
+    // 1) Try Cloud Function if configured
+    if (functionEndpoint != null) {
+      try {
+        final token = await _auth.currentUser?.getIdToken();
+        final res = await http.post(
+          functionEndpoint!,
+          headers: {
+            'content-type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'mood': mood,
+            'spiritualPath': spiritualPath,
+            'category': category,
+          }),
+        );
+        if (res.statusCode == 200) {
+          final m = jsonDecode(res.body) as Map<String, dynamic>;
+          return DailyWisdom.fromMap(m['id'] as String? ?? 'func', m);
         }
+      } catch (_) {
+        // ignore and fall through to Firestore
       }
+    }
 
-      // Call Cloud Function for personalized wisdom
-      final callable = _functions.httpsCallable('getDailyWisdom');
-      final result = await callable.call({
-        'user_mood': userMood,
-        'spiritual_path': spiritualPath,
-        'category': category,
-      });
-
-      final data = Map<String, dynamic>.from(result.data);
-      // Ensure id is included
-      if (!data.containsKey('id') && result.data is Map) {
-        final resultData = result.data as Map<String, dynamic>;
-        data['id'] = resultData['id'] ?? resultData['wisdom_id'] ?? 'default';
+    // 2) Try curated daily doc
+    try {
+      final d = await _db.collection('wisdom_daily').doc('today').get();
+      if (d.exists) {
+        final data = Map<String, dynamic>.from(d.data() ?? {});
+        data.putIfAbsent(
+            'servedAt', () => DateTime.now().millisecondsSinceEpoch);
+        return DailyWisdom.fromMap(d.id, data);
       }
-      return WisdomModel.fromJson(data);
-    } catch (e) {
-      throw Exception('Failed to get daily wisdom: $e');
+    } catch (_) {
+      // fall through
     }
+
+    // 3) Random from library
+    try {
+      final q = await _db
+          .collection('wisdom')
+          .where('published', isEqualTo: true)
+          .limit(50)
+          .get();
+      if (q.docs.isNotEmpty) {
+        final doc = (q.docs..shuffle()).first;
+        final data = Map<String, dynamic>.from(doc.data());
+        data.putIfAbsent(
+            'servedAt', () => DateTime.now().millisecondsSinceEpoch);
+        return DailyWisdom.fromMap(doc.id, data);
+      }
+    } catch (_) {
+      // fall through
+    }
+
+    // 4) Local fallback
+    return DailyWisdom(
+      id: 'local-fallback',
+      translation: 'Start where you are. Use what you have. Do what you can.',
+      verse: null,
+      meaning: 'Begin your journey now with the resources at hand.',
+      source: 'Wisdom',
+      author: 'Arthur Ashe',
+      tags: const ['discipline', 'action'],
+      servedAt: DateTime.now(),
+      category: 'General',
+    );
   }
 
-  /// Get wisdom by ID
-  Future<WisdomModel?> getWisdomById(String wisdomId) async {
-    final doc = await _wisdomRef.doc(wisdomId).get();
-    if (!doc.exists) return null;
-    return WisdomModel.fromFirestore(doc);
-  }
-
-  /// Get wisdom library with filters
-  Future<List<WisdomModel>> getWisdomLibrary({
-    String? source,
-    String? category,
-    List<String>? tags,
-    String? moodFit,
-    String? tradition,
-    int limit = 50,
-  }) async {
-    Query query = _wisdomRef.limit(limit);
-
-    if (source != null) {
-      query = query.where('source', isEqualTo: source);
-    }
-    if (category != null) {
-      query = query.where('category', isEqualTo: category);
-    }
-    if (tags != null && tags.isNotEmpty) {
-      query = query.where('tags', arrayContainsAny: tags);
-    }
-    if (moodFit != null) {
-      query = query.where('mood_fit', arrayContains: moodFit);
-    }
-    if (tradition != null) {
-      query = query.where('tradition', isEqualTo: tradition);
-    }
-
-    final snapshot = await query.get();
-    return snapshot.docs.map((doc) => WisdomModel.fromFirestore(doc)).toList();
-  }
-
-  /// Stream wisdom library for real-time updates
-  Stream<List<WisdomModel>> streamWisdomLibrary({
-    String? source,
-    String? category,
-    int limit = 50,
-  }) {
-    Query query = _wisdomRef.limit(limit);
-
-    if (source != null) {
-      query = query.where('source', isEqualTo: source);
-    }
-    if (category != null) {
-      query = query.where('category', isEqualTo: category);
-    }
-
-    return query.snapshots().map((snapshot) =>
-        snapshot.docs.map((doc) => WisdomModel.fromFirestore(doc)).toList());
-  }
-
-  /// Get legends wisdom (quotes from famous masters)
-  Future<List<WisdomModel>> getLegendsWisdom({
-    String? author,
-    int limit = 20,
-  }) async {
-    Query query = _wisdomRef.where('author', isNotEqualTo: null).limit(limit);
-
-    if (author != null) {
-      query = query.where('author', isEqualTo: author);
-    }
-
-    final snapshot = await query.get();
-    return snapshot.docs.map((doc) => WisdomModel.fromFirestore(doc)).toList();
-  }
-
-  /// Save wisdom to user's personal library
+  /// Save a wisdom item to the user's `my_wisdom` collection.
   Future<void> saveToMyWisdom(String wisdomId) async {
-    final uid = _requireUid();
-    await _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('saved_wisdom')
-        .doc(wisdomId)
-        .set({
-      'wisdom_id': wisdomId,
-      'saved_at': FieldValue.serverTimestamp(),
-    });
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+    final ref =
+        _db.collection('users').doc(uid).collection('my_wisdom').doc(wisdomId);
+    await ref.set({
+      'savedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
-  /// Get user's saved wisdom
-  Stream<List<WisdomModel>> streamSavedWisdom() {
-    final uid = _requireUid();
-    return _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('saved_wisdom')
-        .snapshots()
-        .asyncMap((snapshot) async {
-      final wisdomIds = snapshot.docs
-          .map((doc) {
-            final data = doc.data() as Map<String, dynamic>? ?? {};
-            return data['wisdom_id'] as String?;
-          })
-          .whereType<String>()
-          .toList();
-
-      if (wisdomIds.isEmpty) return [];
-
-      final wisdomDocs = await Future.wait(
-        wisdomIds.map((id) => _wisdomRef.doc(id).get()),
-      );
-
-      return wisdomDocs
-          .where((doc) => doc.exists)
-          .map((doc) => WisdomModel.fromFirestore(doc))
-          .toList();
-    });
+  /// Read a wisdom document by id and convert to DailyWisdom.
+  Future<DailyWisdom?> getWisdomById(String id) async {
+    try {
+      final d = await _db.collection('wisdom').doc(id).get();
+      if (!d.exists) return null;
+      final raw = d.data() ?? {};
+      return DailyWisdom.fromMap(d.id, raw);
+    } catch (_) {
+      return null;
+    }
   }
 
-  /// Create reflection on wisdom
+  /// Store a user's reflection on a wisdom item. Accepts named parameters for
+  /// compatibility with existing callers in the UI.
   Future<void> reflectOnWisdom({
     required String wisdomId,
     String? reflectionText,
     int? moodBefore,
     int? moodAfter,
-    List<String>? insights,
   }) async {
-    final uid = _requireUid();
-    await _wisdomReflectionsRef.add({
-      'wisdom_id': wisdomId,
-      'user_id': uid,
-      'reflection_text': reflectionText,
-      'mood_before': moodBefore,
-      'mood_after': moodAfter,
-      'insights': insights ?? [],
-      'applied_today': false,
-      'reflected_at': FieldValue.serverTimestamp(),
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+    final ref =
+        _db.collection('users').doc(uid).collection('wisdom_reflections').doc();
+    await ref.set({
+      'wisdomId': wisdomId,
+      if (reflectionText != null) 'reflection': reflectionText,
+      if (moodBefore != null) 'moodBefore': moodBefore,
+      if (moodAfter != null) 'moodAfter': moodAfter,
+      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
-  /// Mark wisdom as applied today (for challenges)
+  /// Mark that the user applied this wisdom (simple bookkeeping / streaking).
   Future<void> markWisdomApplied(String wisdomId) async {
-    final uid = _requireUid();
-    await _wisdomReflectionsRef.add({
-      'wisdom_id': wisdomId,
-      'user_id': uid,
-      'applied_today': true,
-      'reflected_at': FieldValue.serverTimestamp(),
-    });
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw Exception('Not signed in');
+    final ref = _db
+        .collection('users')
+        .doc(uid)
+        .collection('applied_wisdom')
+        .doc(wisdomId);
+    await ref.set({
+      'appliedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
-  /// Get user's wisdom reflections
-  Stream<List<WisdomReflectionModel>> streamWisdomReflections(
-      {int limit = 30}) {
-    return _wisdomReflectionsRef
-        .orderBy('reflected_at', descending: true)
-        .limit(limit)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        try {
-          return WisdomReflectionModel.fromFirestore(doc);
-        } catch (e) {
-          print('Error parsing reflection: $e');
-          // Return a basic model if parsing fails
-          final data = doc.data() as Map<String, dynamic>? ?? {};
-          return WisdomReflectionModel(
-            id: doc.id,
-            wisdomId: data['wisdom_id'] ?? '',
-            userId: data['user_id'] ?? _auth.currentUser?.uid ?? '',
-            reflectionText: data['reflection_text'],
-            moodBefore: data['mood_before'],
-            moodAfter: data['mood_after'],
-            insights: data['insights'] != null
-                ? List<String>.from(data['insights'])
-                : null,
-            appliedToday: data['applied_today'] ?? false,
-            reflectedAt: (data['reflected_at'] as Timestamp?)?.toDate(),
-          );
-        }
+  /// Stream user's saved wisdom items as a list.
+  Stream<List<DailyWisdom>> savedWisdomStream() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return const Stream<List<DailyWisdom>>.empty();
+    final col = _db
+        .collection('users')
+        .doc(uid)
+        .collection('my_wisdom')
+        .orderBy('savedAt', descending: true);
+    return col.snapshots().asyncMap((snap) async {
+      final ids = snap.docs.map((d) => d.id).toList();
+      if (ids.isEmpty) return <DailyWisdom>[];
+      final docs = await Future.wait(
+          ids.map((id) => _db.collection('wisdom').doc(id).get()));
+      return docs.where((d) => d.exists).map((d) {
+        final raw = d.data() ?? {};
+        return DailyWisdom.fromMap(d.id, raw);
       }).toList();
     });
   }
 
-  /// Get wisdom streak (consecutive days of wisdom reading)
-  Future<int> getWisdomStreak() async {
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-
-    int streak = 0;
-    DateTime currentDate = startOfDay;
-
-    // Check up to 365 days back
-    for (int i = 0; i < 365; i++) {
-      final endOfDay = currentDate.add(const Duration(days: 1));
-      final snapshot = await _wisdomReflectionsRef
-          .where('reflected_at',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(currentDate))
-          .where('reflected_at', isLessThan: Timestamp.fromDate(endOfDay))
-          .limit(1)
-          .get();
-
-      if (snapshot.docs.isEmpty) break;
-      streak++;
-      currentDate = currentDate.subtract(const Duration(days: 1));
-    }
-
-    return streak;
+  /// Stream user reflections.
+  Stream<List<Map<String, dynamic>>> wisdomReflectionsStream() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return const Stream<List<Map<String, dynamic>>>.empty();
+    final col = _db
+        .collection('users')
+        .doc(uid)
+        .collection('wisdom_reflections')
+        .orderBy('createdAt', descending: true);
+    return col.snapshots().map((snap) => snap.docs
+        .map((d) =>
+            Map<String, dynamic>.from(d.data() as Map<String, dynamic>? ?? {}))
+        .toList());
   }
 
-  /// Search wisdom by text
-  Future<List<WisdomModel>> searchWisdom(String query, {int limit = 20}) async {
-    final snapshot = await _wisdomRef
-        .where('translation', isGreaterThanOrEqualTo: query)
-        .where('translation', isLessThanOrEqualTo: '$query\uf8ff')
-        .limit(limit)
-        .get();
-
-    return snapshot.docs.map((doc) => WisdomModel.fromFirestore(doc)).toList();
-  }
-
-  /// Get AI reflection on wisdom (connects verse to user's current state)
-  Future<Map<String, dynamic>> getAIReflection({
-    required String wisdomId,
-    required String reflectionPrompt,
-  }) async {
+  /// Fetch distinct sources from the wisdom collection (best-effort query).
+  Future<List<String>> getSources() async {
     try {
-      final callable = _functions.httpsCallable('getWisdomReflection');
-      final result = await callable.call({
-        'wisdom_id': wisdomId,
-        'reflection_prompt': reflectionPrompt,
-      });
-      return Map<String, dynamic>.from(result.data);
-    } catch (e) {
-      throw Exception('Failed to get AI reflection: $e');
+      final q = await _db.collection('wisdom').limit(200).get();
+      final set = <String>{};
+      for (final d in q.docs) {
+        final s = (d.data() as Map<String, dynamic>?)?['source'];
+        if (s is String && s.isNotEmpty) set.add(s);
+      }
+      return set.toList();
+    } catch (_) {
+      return [];
     }
   }
 
-  /// Get available sources (Thirukkural, Gita, etc.)
-  Future<List<String>> getAvailableSources() async {
-    final snapshot = await _wisdomRef.get();
-    final sources = <String>{};
-    for (var doc in snapshot.docs) {
-      final data = doc.data() as Map<String, dynamic>? ?? {};
-      final source = data['source'] as String?;
-      if (source != null) sources.add(source);
+  /// Fetch distinct categories from the wisdom collection (best-effort).
+  Future<List<String>> getCategories() async {
+    try {
+      final q = await _db.collection('wisdom').limit(200).get();
+      final set = <String>{};
+      for (final d in q.docs) {
+        final s = (d.data() as Map<String, dynamic>?)?['category'];
+        if (s is String && s.isNotEmpty) set.add(s);
+      }
+      return set.toList();
+    } catch (_) {
+      return [];
     }
-    return sources.toList()..sort();
   }
 
-  /// Get available categories
-  Future<List<String>> getAvailableCategories() async {
-    final snapshot = await _wisdomRef.get();
-    final categories = <String>{};
-    for (var doc in snapshot.docs) {
-      final data = doc.data() as Map<String, dynamic>? ?? {};
-      final category = data['category'] as String?;
-      if (category != null) categories.add(category);
+  /// Stream the wisdom library with optional filters.
+  Stream<List<DailyWisdom>> wisdomLibraryStream(
+      {String? category, String? source, int limit = 50}) {
+    Query col = _db.collection('wisdom').where('published', isEqualTo: true);
+    if (category != null && category.isNotEmpty) {
+      col = col.where('category', isEqualTo: category);
     }
-    return categories.toList()..sort();
+    if (source != null && source.isNotEmpty) {
+      col = col.where('source', isEqualTo: source);
+    }
+    col = col.limit(limit);
+    return col.snapshots().map((snap) => snap.docs.map((d) {
+          final raw = d.data() as Map<String, dynamic>? ?? {};
+          return DailyWisdom.fromMap(d.id, raw);
+        }).toList());
   }
 }

@@ -25,30 +25,14 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
   @override
   void initState() {
     super.initState();
-    _loadMonthEvents();
-  }
-
-  void _loadMonthEvents() {
-    Future.microtask(() async {
-      final service = CalendarEventsService();
-      final startDate = DateTime(_selectedDate.year, _selectedDate.month, 1);
-      final endDate =
-          DateTime(_selectedDate.year, _selectedDate.month + 1, 0, 23, 59, 59);
-      final events = await service.getEventsForDateRange(
-        startDate: startDate,
-        endDate: endDate,
-      );
-      if (mounted) {
-        setState(() {
-          _monthEvents = events;
-        });
-      }
-    });
+    // Initialize with empty list - real-time updates via StreamProvider
+    _monthEvents = [];
   }
 
   @override
   Widget build(BuildContext context) {
-    final monthEventsAsync = ref.watch(monthEventsProvider({
+    // Use StreamProvider for real-time updates
+    final monthEventsAsync = ref.watch(monthEventsStreamProvider({
       'year': _selectedDate.year,
       'month': _selectedDate.month,
     }));
@@ -93,60 +77,65 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                 ],
               ),
             ),
-            // Calendar
-            AuraCard(
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(LucideIcons.chevronLeft),
-                        color: Colors.white,
-                        onPressed: () {
-                          setState(() {
-                            _selectedDate = DateTime(
-                              _selectedDate.year,
-                              _selectedDate.month - 1,
-                            );
-                          });
-                          _loadMonthEvents();
-                        },
-                      ),
-                      Text(
-                        DateFormat('MMMM yyyy').format(_selectedDate),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+            // Calendar Card
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: AuraCard(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: const Icon(LucideIcons.chevronLeft),
                           color: Colors.white,
+                          onPressed: () {
+                            setState(() {
+                              _selectedDate = DateTime(
+                                _selectedDate.year,
+                                _selectedDate.month - 1,
+                              );
+                            });
+                          },
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(LucideIcons.chevronRight),
-                        color: Colors.white,
-                        onPressed: () {
-                          setState(() {
-                            _selectedDate = DateTime(
-                              _selectedDate.year,
-                              _selectedDate.month + 1,
-                            );
-                          });
-                          _loadMonthEvents();
+                        Text(
+                          DateFormat('MMMM yyyy').format(_selectedDate),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(LucideIcons.chevronRight),
+                          color: Colors.white,
+                          onPressed: () {
+                            setState(() {
+                              _selectedDate = DateTime(
+                                _selectedDate.year,
+                                _selectedDate.month + 1,
+                              );
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Calendar Grid with fixed height
+                    SizedBox(
+                      height: 280, // Fixed height to prevent overflow
+                      child: monthEventsAsync.when(
+                        data: (events) {
+                          _monthEvents = events;
+                          return _buildCalendarGrid();
                         },
+                        loading: () => _buildCalendarGrid(),
+                        error: (_, __) => _buildCalendarGrid(),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Calendar Grid
-                  monthEventsAsync.when(
-                    data: (events) {
-                      _monthEvents = events;
-                      return _buildCalendarGrid();
-                    },
-                    loading: () => _buildCalendarGrid(),
-                    error: (_, __) => _buildCalendarGrid(),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -167,8 +156,10 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
+      physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Date Header with Moon Phase
           AuraCard(
@@ -231,6 +222,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
                     'Today\'s Events',
@@ -272,6 +264,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
                     'Your Practices',
@@ -298,6 +291,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
           ),
+          const SizedBox(height: 16), // Bottom padding to prevent overflow
         ],
       ),
     );
@@ -344,7 +338,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
 
     // Empty cells for days before month starts
     for (var i = 1; i < firstWeekday; i++) {
-      dayWidgets.add(const SizedBox());
+      dayWidgets.add(const SizedBox.shrink());
     }
 
     // Days of the month
@@ -380,6 +374,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
             });
           },
           child: Container(
+            margin: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               color: isSelected
                   ? AppColors.spiritualColor
@@ -397,11 +392,13 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
             ),
             child: Stack(
               alignment: Alignment.center,
+              clipBehavior: Clip.none,
               children: [
                 Center(
                   child: Text(
                     '$day',
                     style: TextStyle(
+                      fontSize: 14,
                       color: isSelected || isToday
                           ? Colors.white
                           : Colors.grey[300],
@@ -417,8 +414,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                     moonPhase.phase == MoonPhase.firstQuarter ||
                     moonPhase.phase == MoonPhase.lastQuarter)
                   Positioned(
-                    top: 2,
-                    right: 2,
+                    top: -2,
+                    right: -2,
                     child: Text(
                       moonPhase.emoji ?? '🌙',
                       style: const TextStyle(fontSize: 10),
@@ -427,11 +424,11 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                 // Festival indicator (top left)
                 if (dateEvents.any((e) => e.type == EventType.festival))
                   Positioned(
-                    top: 2,
-                    left: 2,
+                    top: -2,
+                    left: -2,
                     child: Container(
-                      width: 4,
-                      height: 4,
+                      width: 6,
+                      height: 6,
                       decoration: const BoxDecoration(
                         color: Colors.amber,
                         shape: BoxShape.circle,
@@ -451,6 +448,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 7,
         childAspectRatio: 1,
+        mainAxisSpacing: 4,
+        crossAxisSpacing: 4,
       ),
       itemCount: dayWidgets.length,
       itemBuilder: (context, index) => dayWidgets[index],

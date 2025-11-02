@@ -36,10 +36,9 @@ class GratitudeJournalEntry {
       userId: data['userId'] as String? ?? '',
       type: data['type'] as String? ?? 'gratitude',
       text: data['text'] as String? ?? '',
-      emotionTags: List<String>.from(data['emotion_tags'] ?? data['emotionTags'] ?? const []),
+      emotionTags: List<String>.from(
+          data['emotion_tags'] ?? data['emotionTags'] ?? const []),
       date: parsedDate,
     );
   }
 }
-
-

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/aura_card.dart';
 import '../../widgets/nav_bar.dart';
+import '../../widgets/agent_wrapper.dart';
 
 class MindScreen extends StatelessWidget {
   const MindScreen({super.key});
@@ -12,7 +13,8 @@ class MindScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
+      body: AgentWrapper(
+        child: SafeArea(
         bottom: false,
         child: Column(
           children: [
@@ -553,6 +555,7 @@ class MindScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
       bottomNavigationBar: const NavBar(),
     );

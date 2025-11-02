@@ -9,10 +9,12 @@ class GratitudeJournalScreen extends ConsumerStatefulWidget {
   const GratitudeJournalScreen({super.key});
 
   @override
-  ConsumerState<GratitudeJournalScreen> createState() => _GratitudeJournalScreenState();
+  ConsumerState<GratitudeJournalScreen> createState() =>
+      _GratitudeJournalScreenState();
 }
 
-class _GratitudeJournalScreenState extends ConsumerState<GratitudeJournalScreen> {
+class _GratitudeJournalScreenState
+    extends ConsumerState<GratitudeJournalScreen> {
   final TextEditingController _textController = TextEditingController();
   String _type = 'gratitude';
 
@@ -75,13 +77,15 @@ class _GratitudeJournalScreenState extends ConsumerState<GratitudeJournalScreen>
                         ChoiceChip(
                           label: const Text('Gratitude'),
                           selected: _type == 'gratitude',
-                          onSelected: (_) => setState(() => _type = 'gratitude'),
+                          onSelected: (_) =>
+                              setState(() => _type = 'gratitude'),
                         ),
                         const SizedBox(width: 8),
                         ChoiceChip(
                           label: const Text('Reflection'),
                           selected: _type == 'reflection',
-                          onSelected: (_) => setState(() => _type = 'reflection'),
+                          onSelected: (_) =>
+                              setState(() => _type = 'reflection'),
                         ),
                       ],
                     ),
@@ -94,9 +98,12 @@ class _GratitudeJournalScreenState extends ConsumerState<GratitudeJournalScreen>
                       decoration: const InputDecoration(
                         hintText: 'Write your thoughts...',
                         hintStyle: TextStyle(color: Colors.grey),
-                        border: OutlineInputBorder(borderSide: BorderSide(color: AppColors.border)),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.border)),
-                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.primary)),
+                        border: OutlineInputBorder(
+                            borderSide: BorderSide(color: AppColors.border)),
+                        enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: AppColors.border)),
+                        focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: AppColors.primary)),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -106,7 +113,8 @@ class _GratitudeJournalScreenState extends ConsumerState<GratitudeJournalScreen>
                         onPressed: () async {
                           final text = _textController.text.trim();
                           if (text.isEmpty) return;
-                          final service = ref.read(gratitudeJournalServiceProvider);
+                          final service =
+                              ref.read(gratitudeJournalServiceProvider);
                           await service.addEntry(type: _type, text: text);
                           _textController.clear();
                         },
@@ -123,7 +131,8 @@ class _GratitudeJournalScreenState extends ConsumerState<GratitudeJournalScreen>
                 data: (entries) {
                   if (entries.isEmpty) {
                     return Center(
-                      child: Text('No entries yet', style: TextStyle(color: Colors.grey[400])),
+                      child: Text('No entries yet',
+                          style: TextStyle(color: Colors.grey[400])),
                     );
                   }
                   return ListView.builder(
@@ -138,7 +147,9 @@ class _GratitudeJournalScreenState extends ConsumerState<GratitudeJournalScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                e.type == 'reflection' ? 'Night Reflection' : 'Gratitude',
+                                e.type == 'reflection'
+                                    ? 'Night Reflection'
+                                    : 'Gratitude',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -147,12 +158,14 @@ class _GratitudeJournalScreenState extends ConsumerState<GratitudeJournalScreen>
                               const SizedBox(height: 8),
                               Text(
                                 e.text,
-                                style: TextStyle(color: Colors.grey[300], height: 1.5),
+                                style: TextStyle(
+                                    color: Colors.grey[300], height: 1.5),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 e.date.toLocal().toString(),
-                                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                                style: TextStyle(
+                                    color: Colors.grey[500], fontSize: 12),
                               ),
                             ],
                           ),
@@ -163,7 +176,8 @@ class _GratitudeJournalScreenState extends ConsumerState<GratitudeJournalScreen>
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, _) => Center(
-                  child: Text('Error: $err', style: const TextStyle(color: Colors.red)),
+                  child: Text('Error: $err',
+                      style: const TextStyle(color: Colors.red)),
                 ),
               ),
             ),
@@ -173,5 +187,3 @@ class _GratitudeJournalScreenState extends ConsumerState<GratitudeJournalScreen>
     );
   }
 }
-
-

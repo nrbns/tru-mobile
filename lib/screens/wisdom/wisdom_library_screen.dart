@@ -198,19 +198,13 @@ class _WisdomLibraryScreenState extends ConsumerState<WisdomLibraryScreen> {
             Expanded(
               child: wisdomAsync.when(
                 data: (wisdomList) {
-                  final filtered = _searchQuery!.isEmpty
+                  final filtered = (_searchQuery ?? '').isEmpty
                       ? wisdomList
                       : wisdomList.where((w) {
-                          return w.translation
-                                  .toLowerCase()
-                                  .contains(_searchQuery!.toLowerCase()) ||
-                              (w.meaning
-                                      ?.toLowerCase()
-                                      .contains(_searchQuery!.toLowerCase()) ??
-                                  false) ||
-                              (w.source
-                                  .toLowerCase()
-                                  .contains(_searchQuery!.toLowerCase()));
+                          final q = _searchQuery!.toLowerCase();
+                          return w.translation.toLowerCase().contains(q) ||
+                              (w.meaning?.toLowerCase().contains(q) ?? false) ||
+                              (w.source?.toLowerCase().contains(q) ?? false);
                         }).toList();
 
                   if (filtered.isEmpty) {

@@ -22,17 +22,18 @@ class PrivacySettingsScreen extends StatelessWidget {
         children: const [
           ListTile(
             title: Text('Data usage', style: TextStyle(color: Colors.white)),
-            subtitle: Text('We use your data to personalize your experience.', style: TextStyle(color: Colors.grey)),
+            subtitle: Text('We use your data to personalize your experience.',
+                style: TextStyle(color: Colors.grey)),
           ),
           Divider(color: AppColors.border),
           ListTile(
-            title: Text('Delete account', style: TextStyle(color: Colors.white)),
-            subtitle: Text('Request account deletion via support.', style: TextStyle(color: Colors.grey)),
+            title:
+                Text('Delete account', style: TextStyle(color: Colors.white)),
+            subtitle: Text('Request account deletion via support.',
+                style: TextStyle(color: Colors.grey)),
           ),
         ],
       ),
     );
   }
 }
-
-

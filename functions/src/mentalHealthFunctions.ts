@@ -3,6 +3,24 @@ import fetch from "node-fetch";
 
 const region = "asia-south1";
 
+// Helpers
+function sanitizeString(s: any, maxLen = 1000) {
+  if (s == null) return "";
+  const str = String(s);
+  return str.length > maxLen ? str.slice(0, maxLen) : str;
+}
+
+function safeParseJSON(text: any) {
+  if (!text || typeof text !== "string") return null;
+  try {
+    const match = text.match(/\{[\s\S]*\}/);
+    const toParse = match ? match[0] : text;
+    return JSON.parse(toParse);
+  } catch (e) {
+    return null;
+  }
+}
+
 /**
  * Generate AI Meditation Session - Headspace/Calm-style
  */
@@ -14,10 +32,15 @@ export const generateMeditation = functions.https.onCall(
       throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
     }
 
-    const { goal, duration_minutes, user_context } = request.data;
+    const { goal, duration_minutes, user_context } = request.data || {};
 
-    if (!goal || !duration_minutes) {
-      throw new functions.https.HttpsError("invalid-argument", "Goal and duration are required");
+    // Basic input validation & sanitization
+    const safeGoal = sanitizeString(goal, 300);
+    const safeDuration = Number(duration_minutes) || 0;
+    const safeContext = sanitizeString(user_context, 2000);
+
+    if (!safeGoal || safeDuration <= 0 || safeDuration > 180) {
+      throw new functions.https.HttpsError("invalid-argument", "Goal and a valid duration (1-180 minutes) are required");
     }
 
     try {
@@ -34,15 +57,15 @@ export const generateMeditation = functions.https.onCall(
       const useGemini = !openaiApiKey && geminiApiKey;
       const apiKey = useGemini ? geminiApiKey : openaiApiKey;
 
-      const prompt = `You are a meditation guide. Generate a ${duration_minutes}-minute guided meditation session for: ${goal}.
+      const prompt = `You are a meditation guide. Generate a ${safeDuration}-minute guided meditation session for: ${safeGoal}.
 
-${user_context ? `User context: ${user_context}` : ''}
+${safeContext ? `User context: ${safeContext}` : ''}
 
 Provide a structured meditation script in JSON format:
 {
   "title": "Meditation title",
-  "goal": "${goal}",
-  "duration_minutes": ${duration_minutes},
+  "goal": "${safeGoal}",
+  "duration_minutes": ${safeDuration},
   "script": [
     {"time": 0, "instruction": "Find a comfortable position..."},
     {"time": 60, "instruction": "Close your eyes..."}
@@ -52,7 +75,7 @@ Provide a structured meditation script in JSON format:
 }`;
 
       if (useGemini) {
-  const response = await fetch(
+        const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
           {
             method: "POST",
@@ -63,17 +86,18 @@ Provide a structured meditation script in JSON format:
           }
         );
 
-        const data: any = await response.json();
-        const responseText = data.candidates[0]?.content?.parts[0]?.text || "{}";
-        
-        try {
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          return JSON.parse(jsonMatch ? jsonMatch[0] : "{}");
-        } catch {
-          return { title: "Guided Meditation", script: [], duration_minutes };
+        if (!response.ok) {
+          console.error("Gemini response not ok", response.status, await response.text().catch(() => ""));
+          return { title: "Guided Meditation", script: [], duration_minutes: safeDuration };
         }
+
+        const data: any = await response.json().catch(() => ({}));
+        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+        const parsed = safeParseJSON(responseText);
+        if (parsed) return parsed;
+        return { title: "Guided Meditation", script: [], duration_minutes: safeDuration };
       } else {
-  const response = await fetch(
+        const response = await fetch(
           "https://api.openai.com/v1/chat/completions",
           {
             method: "POST",
@@ -94,9 +118,20 @@ Provide a structured meditation script in JSON format:
           }
         );
 
-        const data: any = await response.json();
-        const responseText = data.choices[0]?.message?.content || "{}";
-        return JSON.parse(responseText);
+        if (!response.ok) {
+          console.error("OpenAI response not ok", response.status, await response.text().catch(() => ""));
+          return { title: "Guided Meditation", script: [], duration_minutes: safeDuration };
+        }
+
+        const data: any = await response.json().catch(() => ({}));
+        const responseText = data.choices?.[0]?.message?.content || "{}";
+        const parsed = safeParseJSON(responseText) || (typeof responseText === "object" ? responseText : null);
+        if (parsed) return parsed;
+        try {
+          return JSON.parse(responseText);
+        } catch {
+          return { title: "Guided Meditation", script: [], duration_minutes: safeDuration };
+        }
       }
     } catch (error: any) {
       console.error("Meditation generation error:", error);
@@ -116,9 +151,9 @@ export const aiTherapyChat = functions.https.onCall(
       throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
     }
 
-  const { message, recent_journals } = request.data;
-
-    if (!message || typeof message !== "string") {
+    const { message, recent_journals } = request.data || {};
+    const safeMessage = sanitizeString(message, 2000);
+    if (!safeMessage) {
       throw new functions.https.HttpsError("invalid-argument", "Message is required");
     }
 
@@ -144,7 +179,7 @@ export const aiTherapyChat = functions.https.onCall(
         });
       }
 
-      const prompt = `You are a compassionate CBT (Cognitive Behavioral Therapy) therapist chatbot. The user wrote: "${message}"
+  const prompt = `You are a compassionate CBT (Cognitive Behavioral Therapy) therapist chatbot. The user wrote: "${safeMessage}"
 
 ${contextPrompt}
 
@@ -158,7 +193,7 @@ Return JSON:
 }`;
 
       if (useGemini) {
-  const response = await fetch(
+        const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
           {
             method: "POST",
@@ -169,17 +204,18 @@ Return JSON:
           }
         );
 
-        const data: any = await response.json();
-        const responseText = data.candidates[0]?.content?.parts[0]?.text || "{}";
-        
-        try {
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          return JSON.parse(jsonMatch ? jsonMatch[0] : "{}");
-        } catch {
+        if (!response.ok) {
+          console.error("Gemini therapy response not ok", response.status, await response.text().catch(() => ""));
           return { response: "I'm here to listen and support you.", suggestions: [] };
         }
+
+        const data: any = await response.json().catch(() => ({}));
+        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+        const parsed = safeParseJSON(responseText) || (typeof responseText === "object" ? responseText : null);
+        if (parsed) return parsed;
+        return { response: "I'm here to listen and support you.", suggestions: [] };
       } else {
-  const response = await fetch(
+        const response = await fetch(
           "https://api.openai.com/v1/chat/completions",
           {
             method: "POST",
@@ -200,9 +236,20 @@ Return JSON:
           }
         );
 
-        const data: any = await response.json();
-        const responseText = data.choices[0]?.message?.content || "{}";
-        return JSON.parse(responseText);
+        if (!response.ok) {
+          console.error("OpenAI therapy response not ok", response.status, await response.text().catch(() => ""));
+          return { response: "I'm here to listen and support you.", suggestions: [] };
+        }
+
+        const data: any = await response.json().catch(() => ({}));
+        const responseText = data.choices?.[0]?.message?.content || "{}";
+        const parsed = safeParseJSON(responseText) || (typeof responseText === "object" ? responseText : null);
+        if (parsed) return parsed;
+        try {
+          return JSON.parse(responseText);
+        } catch {
+          return { response: "I'm here to listen and support you.", suggestions: [] };
+        }
       }
     } catch (error: any) {
       console.error("Therapy chat error:", error);
@@ -222,7 +269,8 @@ export const aiCrisisCheckin = functions.https.onCall(
       throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
     }
 
-  const { recent_moods, user_message } = request.data;
+  const { recent_moods, user_message } = request.data || {};
+  const safeUserMessage = sanitizeString(user_message, 2000);
 
     try {
   const openaiApiKey = process.env.OPENAI_API_KEY;
@@ -244,8 +292,8 @@ export const aiCrisisCheckin = functions.https.onCall(
         contextPrompt += `Recent average mood: ${avgMood.toFixed(1)}/10\n`;
       }
 
-      if (user_message) {
-        contextPrompt += `User message: "${user_message}"\n`;
+      if (safeUserMessage) {
+        contextPrompt += `User message: "${safeUserMessage}"\n`;
       }
 
       const prompt = `Analyze the user's mental health state based on: ${contextPrompt}
@@ -277,15 +325,16 @@ Return JSON:
           }
         );
 
-        const data: any = await response.json();
-        const responseText = data.candidates[0]?.content?.parts[0]?.text || "{}";
-        
-        try {
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          return JSON.parse(jsonMatch ? jsonMatch[0] : "{}");
-        } catch {
+        if (!response.ok) {
+          console.error("Gemini crisis response not ok", response.status, await response.text().catch(() => ""));
           return { risk_level: "low", needs_immediate_help: false, recommendations: [], coping_strategies: [] };
         }
+
+        const data: any = await response.json().catch(() => ({}));
+        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+        const parsed = safeParseJSON(responseText) || (typeof responseText === "object" ? responseText : null);
+        if (parsed) return parsed;
+        return { risk_level: "low", needs_immediate_help: false, recommendations: [], coping_strategies: [] };
       } else {
         const response = await fetch(
           "https://api.openai.com/v1/chat/completions",
@@ -308,9 +357,20 @@ Return JSON:
           }
         );
 
-        const data: any = await response.json();
-        const responseText = data.choices[0]?.message?.content || "{}";
-        return JSON.parse(responseText);
+        if (!response.ok) {
+          console.error("OpenAI crisis response not ok", response.status, await response.text().catch(() => ""));
+          return { risk_level: "low", needs_immediate_help: false, recommendations: [], coping_strategies: [] };
+        }
+
+        const data: any = await response.json().catch(() => ({}));
+        const responseText = data.choices?.[0]?.message?.content || "{}";
+        const parsed = safeParseJSON(responseText) || (typeof responseText === "object" ? responseText : null);
+        if (parsed) return parsed;
+        try {
+          return JSON.parse(responseText);
+        } catch {
+          return { risk_level: "low", needs_immediate_help: false, recommendations: [], coping_strategies: [] };
+        }
       }
     } catch (error: any) {
       console.error("Crisis check-in error:", error);

@@ -60,49 +60,58 @@ class TodayService {
   }
 
   Future<void> updateCalories(int calories) async {
-    await _todayRef.update({
+    await _todayRef.set({
+      'date': FieldValue.serverTimestamp(),
       'calories': FieldValue.increment(calories),
       'updated_at': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateWorkoutStatus(
       {required int done, required int target}) async {
-    await _todayRef.update({
+    await _todayRef.set({
+      'date': FieldValue.serverTimestamp(),
       'workouts': {
         'done': done,
         'target': target,
       },
       'updated_at': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateMood({required int score}) async {
-    await _todayRef.update({
-      'mood.latest': score,
-      'mood.last_logged_at': FieldValue.serverTimestamp(),
+    await _todayRef.set({
+      'date': FieldValue.serverTimestamp(),
+      'mood': {
+        'latest': score,
+        'last_logged_at': FieldValue.serverTimestamp(),
+      },
       'updated_at': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateSadhana(
       {required int done,
       required int target,
       List<String>? completedPractices}) async {
-    await _todayRef.update({
-      'sadhana.done': done,
-      'sadhana.target': target,
-      if (completedPractices != null)
-        'sadhana.completed_practices': completedPractices,
+    final sadhanaData = <String, dynamic>{
+      'done': done,
+      'target': target,
+      'completed_practices': completedPractices ?? [],
+    };
+    await _todayRef.set({
+      'date': FieldValue.serverTimestamp(),
+      'sadhana': sadhanaData,
       'updated_at': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateStreak(int streak) async {
-    await _todayRef.update({
+    await _todayRef.set({
+      'date': FieldValue.serverTimestamp(),
       'streak': streak,
       'updated_at': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
   }
 
   Future<void> callAggregateToday() async {

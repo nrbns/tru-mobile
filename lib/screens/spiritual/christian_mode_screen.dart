@@ -26,7 +26,11 @@ class ChristianModeScreen extends ConsumerWidget {
                     onPressed: () => context.pop(),
                   ),
                   const Expanded(
-                    child: Text('Christian Mode', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
+                    child: Text('Christian Mode',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -42,9 +46,14 @@ class ChristianModeScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Daily Verse', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                                const Text('Daily Verse',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600)),
                                 const SizedBox(height: 8),
-                                Text((v.first['text'] ?? '') as String, style: TextStyle(color: Colors.grey[300], height: 1.6)),
+                                Text((v.first['text'] ?? '') as String,
+                                    style: TextStyle(
+                                        color: Colors.grey[300], height: 1.6)),
                               ],
                             ),
                           ),
@@ -59,11 +68,19 @@ class ChristianModeScreen extends ConsumerWidget {
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: AuraCard(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text((it['title'] ?? 'Devotional') as String, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                                      Text(
+                                          (it['title'] ?? 'Devotional')
+                                              as String,
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600)),
                                       const SizedBox(height: 8),
-                                      Text((it['reflection'] ?? '') as String, style: TextStyle(color: Colors.grey[300])),
+                                      Text((it['reflection'] ?? '') as String,
+                                          style: TextStyle(
+                                              color: Colors.grey[300])),
                                     ],
                                   ),
                                 ),

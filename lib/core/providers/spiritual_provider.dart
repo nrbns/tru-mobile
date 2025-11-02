@@ -6,10 +6,13 @@ import '../services/spiritual_content_service.dart';
 final spiritualServiceProvider = Provider((ref) => SpiritualService());
 
 /// Provider for SpiritualContentService
-final spiritualContentServiceProvider = Provider((ref) => SpiritualContentService());
+final spiritualContentServiceProvider =
+    Provider((ref) => SpiritualContentService());
 
 /// StreamProvider for practices
-final practicesStreamProvider = StreamProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>((ref, params) {
+final practicesStreamProvider =
+    StreamProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>(
+        (ref, params) {
   final service = ref.watch(spiritualServiceProvider);
   return service.streamPractices(
     traditions: params['traditions'] as List<String>?,
@@ -18,7 +21,9 @@ final practicesStreamProvider = StreamProvider.family<List<Map<String, dynamic>>
 });
 
 /// FutureProvider for mantras with filters
-final mantrasProvider = FutureProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>((ref, params) async {
+final mantrasProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>(
+        (ref, params) async {
   final service = ref.watch(spiritualContentServiceProvider);
   return service.getMantras(
     traditions: params['traditions'] as List<String>?,
@@ -28,7 +33,9 @@ final mantrasProvider = FutureProvider.family<List<Map<String, dynamic>>, Map<St
 });
 
 /// StreamProvider for mantras (real-time)
-final mantrasStreamProvider = StreamProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>((ref, params) {
+final mantrasStreamProvider =
+    StreamProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>(
+        (ref, params) {
   final service = ref.watch(spiritualContentServiceProvider);
   return service.streamMantras(
     traditions: params['traditions'] as List<String>?,
@@ -43,7 +50,9 @@ final dailyWisdomProvider = FutureProvider((ref) async {
 });
 
 /// FutureProvider for sacred verses
-final sacredVersesProvider = FutureProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>((ref, params) async {
+final sacredVersesProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>(
+        (ref, params) async {
   final service = ref.watch(spiritualContentServiceProvider);
   return service.getSacredVerses(
     traditions: params['traditions'] as List<String>?,
@@ -56,4 +65,3 @@ final practiceLogsStreamProvider = StreamProvider((ref) {
   final service = ref.watch(spiritualServiceProvider);
   return service.streamPracticeLogs();
 });
-

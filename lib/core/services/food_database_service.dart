@@ -3,7 +3,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 /// Food Database Service - Integration with Spoonacular API
 /// Similar to HealthifyMe/Spoonacular food tracking
 class FoodDatabaseService {
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(region: 'asia-south1');
+  final FirebaseFunctions _functions =
+      FirebaseFunctions.instanceFor(region: 'asia-south1');
 
   /// Search foods by name (like Spoonacular)
   Future<List<Map<String, dynamic>>> searchFoods(String query) async {
@@ -79,4 +80,3 @@ class FoodDatabaseService {
     }
   }
 }
-

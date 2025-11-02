@@ -8,9 +8,11 @@ import '../../widgets/progress_ring.dart';
 import '../../widgets/tracker_bar.dart';
 import '../../widgets/quick_actions.dart';
 import '../../widgets/nav_bar.dart';
+import '../../widgets/agent_wrapper.dart';
 import '../../core/providers/today_provider.dart';
 import '../../core/providers/app_state_provider.dart';
 import '../../core/providers/wisdom_provider.dart';
+import '../../core/providers/activity_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -19,10 +21,12 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final todayAsync = ref.watch(todayStreamProvider);
     final appState = ref.watch(appStateProvider);
+    final activityAsync = ref.watch(todayActivityProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
+      body: AgentWrapper(
+        child: SafeArea(
         bottom: false,
         child: Column(
           children: [
@@ -52,7 +56,7 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Wednesday, Oct 29',
+                        _getFormattedDate(),
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[400],
@@ -146,165 +150,509 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     // Mood & Energy Rings
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AuraCard(
-                            variant: AuraCardVariant.mood,
-                            child: Column(
-                              children: [
-                                const ProgressRing(
-                                  progress: 78,
-                                  size: 80,
-                                  strokeWidth: 6,
-                                  color: AppColors.secondary,
-                                  showPercentage: false,
-                                  glow: true,
+                    todayAsync.when(
+                      data: (today) {
+                        // Calculate progress percentages (0-100)
+                        final moodProgress = today.mood.latest != null
+                            ? (today.mood.latest! / 10 * 100).clamp(0.0, 100.0)
+                            : 0.0;
+                        final waterProgress = (today.waterMl / 2000 * 100).clamp(0.0, 100.0);
+                        final workoutProgress = (today.workouts.progress * 100).clamp(0.0, 100.0);
+                        
+                        // Get mood label
+                        String moodLabel = 'Not Set';
+                        if (today.mood.latest != null) {
+                          if (today.mood.latest! >= 8) {
+                            moodLabel = 'Excellent';
+                          } else if (today.mood.latest! >= 6) {
+                            moodLabel = 'Good';
+                          } else if (today.mood.latest! >= 4) {
+                            moodLabel = 'Fair';
+                          } else {
+                            moodLabel = 'Low';
+                          }
+                        }
+                        
+                        // Get energy label (based on mood and workouts)
+                        final energyScore = (moodProgress + workoutProgress) / 2;
+                        String energyLabel = 'Low';
+                        if (energyScore >= 80) {
+                          energyLabel = 'High';
+                        } else if (energyScore >= 60) {
+                          energyLabel = 'Good';
+                        } else if (energyScore >= 40) {
+                          energyLabel = 'Fair';
+                        }
+                        
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: AuraCard(
+                                variant: AuraCardVariant.mood,
+                                child: Column(
+                                  children: [
+                                    ProgressRing(
+                                      progress: moodProgress,
+                                      size: 80,
+                                      strokeWidth: 6,
+                                      color: AppColors.secondary,
+                                      showPercentage: false,
+                                      glow: moodProgress > 0,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Mood',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      moodLabel,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[400],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Mood',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  'Good',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[400],
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: AuraCard(
-                            variant: AuraCardVariant.nutrition,
-                            child: Column(
-                              children: [
-                                const ProgressRing(
-                                  progress: 65,
-                                  size: 80,
-                                  strokeWidth: 6,
-                                  color: AppColors.nutritionColor,
-                                  showPercentage: false,
-                                  glow: true,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: AuraCard(
+                                variant: AuraCardVariant.nutrition,
+                                child: Column(
+                                  children: [
+                                    ProgressRing(
+                                      progress: waterProgress,
+                                      size: 80,
+                                      strokeWidth: 6,
+                                      color: AppColors.nutritionColor,
+                                      showPercentage: false,
+                                      glow: waterProgress > 0,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Water',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${today.waterMl ~/ 250}/8 cups',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[400],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Water',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  todayAsync.when(
-                                    data: (today) =>
-                                        '${today.waterMl ~/ 250}/8 cups',
-                                    loading: () => '0/8 cups',
-                                    error: (_, __) => '0/8 cups',
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[400],
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: AuraCard(
-                            child: Column(
-                              children: [
-                                const ProgressRing(
-                                  progress: 82,
-                                  size: 80,
-                                  strokeWidth: 6,
-                                  color: AppColors.warning,
-                                  showPercentage: false,
-                                  glow: true,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: AuraCard(
+                                child: Column(
+                                  children: [
+                                    ProgressRing(
+                                      progress: workoutProgress,
+                                      size: 80,
+                                      strokeWidth: 6,
+                                      color: AppColors.warning,
+                                      showPercentage: false,
+                                      glow: workoutProgress > 0,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Workouts',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${today.workouts.done}/${today.workouts.target}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[400],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Energy',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  'High',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[400],
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Glow Tracker
-                    const AuraCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                          ],
+                        );
+                      },
+                      loading: () => Row(
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Today's Glow Tracker",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
+                          Expanded(
+                            child: AuraCard(
+                              variant: AuraCardVariant.mood,
+                              child: Column(
+                                children: [
+                                  const ProgressRing(
+                                    progress: 0,
+                                    size: 80,
+                                    strokeWidth: 6,
+                                    color: AppColors.secondary,
+                                    showPercentage: false,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Mood',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Loading...',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Icon(
-                                LucideIcons.flame,
-                                color: AppColors.warning,
-                                size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: AuraCard(
+                              variant: AuraCardVariant.nutrition,
+                              child: Column(
+                                children: [
+                                  const ProgressRing(
+                                    progress: 0,
+                                    size: 80,
+                                    strokeWidth: 6,
+                                    color: AppColors.nutritionColor,
+                                    showPercentage: false,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Water',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    '0/8 cups',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                          SizedBox(height: 16),
-                          TrackerBar(
-                            value: 6.5,
-                            max: 8,
-                            label: 'Hydration',
-                            icon: LucideIcons.droplet,
-                            color: AppColors.nutritionColor,
-                            unit: ' cups',
-                          ),
-                          SizedBox(height: 16),
-                          TrackerBar(
-                            value: 320,
-                            max: 450,
-                            label: 'Activity',
-                            icon: LucideIcons.zap,
-                            color: AppColors.warning,
-                            unit: ' min',
-                          ),
-                          SizedBox(height: 16),
-                          TrackerBar(
-                            value: 7,
-                            max: 8,
-                            label: 'Sleep',
-                            icon: LucideIcons.moon,
-                            color: AppColors.secondary,
-                            unit: ' hrs',
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: AuraCard(
+                              child: Column(
+                                children: [
+                                  const ProgressRing(
+                                    progress: 0,
+                                    size: 80,
+                                    strokeWidth: 6,
+                                    color: AppColors.warning,
+                                    showPercentage: false,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Workouts',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    '0/1',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
+                      error: (_, __) => Row(
+                        children: [
+                          Expanded(
+                            child: AuraCard(
+                              variant: AuraCardVariant.mood,
+                              child: Column(
+                                children: [
+                                  const ProgressRing(
+                                    progress: 0,
+                                    size: 80,
+                                    strokeWidth: 6,
+                                    color: AppColors.secondary,
+                                    showPercentage: false,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Mood',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Not Set',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: AuraCard(
+                              variant: AuraCardVariant.nutrition,
+                              child: Column(
+                                children: [
+                                  const ProgressRing(
+                                    progress: 0,
+                                    size: 80,
+                                    strokeWidth: 6,
+                                    color: AppColors.nutritionColor,
+                                    showPercentage: false,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Water',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    '0/8 cups',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: AuraCard(
+                              child: Column(
+                                children: [
+                                  const ProgressRing(
+                                    progress: 0,
+                                    size: 80,
+                                    strokeWidth: 6,
+                                    color: AppColors.warning,
+                                    showPercentage: false,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Workouts',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    '0/1',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Glow Tracker
+                    Consumer(
+                      builder: (context, ref, child) {
+                        return todayAsync.when(
+                          data: (today) {
+                            final waterCups = today.waterMl / 250;
+                            final activityMinutes = activityAsync.valueOrNull?['activity_minutes'] as int? ?? 0;
+                            // Sleep hours - placeholder (would come from sleep tracking service)
+                            final sleepHours = 0.0; // TODO: Integrate sleep tracking
+                            
+                            return AuraCard(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        "Today's Glow Tracker",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const Icon(
+                                        LucideIcons.flame,
+                                        color: AppColors.warning,
+                                        size: 24,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TrackerBar(
+                                    value: waterCups,
+                                    max: 8,
+                                    label: 'Hydration',
+                                    icon: LucideIcons.droplet,
+                                    color: AppColors.nutritionColor,
+                                    unit: ' cups',
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TrackerBar(
+                                    value: activityMinutes.toDouble(),
+                                    max: 450,
+                                    label: 'Activity',
+                                    icon: LucideIcons.zap,
+                                    color: AppColors.warning,
+                                    unit: ' min',
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TrackerBar(
+                                    value: sleepHours,
+                                    max: 8,
+                                    label: 'Sleep',
+                                    icon: LucideIcons.moon,
+                                    color: AppColors.secondary,
+                                    unit: ' hrs',
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          loading: () => AuraCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      "Today's Glow Tracker",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const Icon(
+                                      LucideIcons.flame,
+                                      color: AppColors.warning,
+                                      size: 24,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                TrackerBar(
+                                  value: 0,
+                                  max: 8,
+                                  label: 'Hydration',
+                                  icon: LucideIcons.droplet,
+                                  color: AppColors.nutritionColor,
+                                  unit: ' cups',
+                                ),
+                                const SizedBox(height: 16),
+                                TrackerBar(
+                                  value: 0,
+                                  max: 450,
+                                  label: 'Activity',
+                                  icon: LucideIcons.zap,
+                                  color: AppColors.warning,
+                                  unit: ' min',
+                                ),
+                                const SizedBox(height: 16),
+                                TrackerBar(
+                                  value: 0,
+                                  max: 8,
+                                  label: 'Sleep',
+                                  icon: LucideIcons.moon,
+                                  color: AppColors.secondary,
+                                  unit: ' hrs',
+                                ),
+                              ],
+                            ),
+                          ),
+                          error: (_, __) => AuraCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      "Today's Glow Tracker",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const Icon(
+                                      LucideIcons.flame,
+                                      color: AppColors.warning,
+                                      size: 24,
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                TrackerBar(
+                                  value: 0,
+                                  max: 8,
+                                  label: 'Hydration',
+                                  icon: LucideIcons.droplet,
+                                  color: AppColors.nutritionColor,
+                                  unit: ' cups',
+                                ),
+                                const SizedBox(height: 16),
+                                TrackerBar(
+                                  value: 0,
+                                  max: 450,
+                                  label: 'Activity',
+                                  icon: LucideIcons.zap,
+                                  color: AppColors.warning,
+                                  unit: ' min',
+                                ),
+                                const SizedBox(height: 16),
+                                TrackerBar(
+                                  value: 0,
+                                  max: 8,
+                                  label: 'Sleep',
+                                  icon: LucideIcons.moon,
+                                  color: AppColors.secondary,
+                                  unit: ' hrs',
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
                     // Wisdom of the Day Widget
@@ -349,7 +697,7 @@ class DashboardScreen extends ConsumerWidget {
                                               ),
                                             ),
                                             Text(
-                                              wisdom.source,
+                                              wisdom.source ?? '',
                                               style: const TextStyle(
                                                 fontSize: 12,
                                                 color: AppColors.textSecondary,
@@ -552,8 +900,16 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
       ),
+      ),
       bottomNavigationBar: const NavBar(),
     );
+  }
+
+  String _getFormattedDate() {
+    final now = DateTime.now();
+    final weekday = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][now.weekday - 1];
+    final month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][now.month - 1];
+    return '$weekday, $month ${now.day}';
   }
 }
 

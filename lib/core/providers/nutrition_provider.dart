@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/nutrition_service.dart';
 import 'auth_provider.dart';
 
@@ -28,12 +29,30 @@ final mealLogsStreamProvider =
   return service.streamMealLogs(limit: 50);
 });
 
-/// FutureProvider for today's total calories
-final todayCaloriesProvider = FutureProvider<int>((ref) async {
+/// StreamProvider for today's total calories (real-time)
+final todayCaloriesProvider = StreamProvider<int>((ref) {
   final currentUser = ref.watch(currentUserProvider);
-  if (currentUser == null) return 0;
+  if (currentUser == null) return Stream.value(0);
   final service = ref.watch(nutritionServiceProvider);
-  return service.getTodayCalories();
+  // Stream calories by watching meal logs
+  return service.streamMealLogs(limit: 100).map((logs) {
+    final today = DateTime.now();
+    final todayStart = DateTime(today.year, today.month, today.day);
+    int total = 0;
+    for (final log in logs) {
+      final ts = log['at'];
+      if (ts == null) continue;
+      DateTime? logDate;
+      if (ts is Timestamp) {
+        logDate = ts.toDate();
+      }
+      if (logDate != null && logDate.isAfter(todayStart)) {
+        final totalMap = log['total'] as Map<String, dynamic>? ?? {};
+        total += totalMap['kcal'] as int? ?? 0;
+      }
+    }
+    return total;
+  });
 });
 
 /// FutureProvider for weekly nutrition summary

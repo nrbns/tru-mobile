@@ -12,7 +12,7 @@ class WisdomTrackerScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final streakAsync = ref.watch(wisdomStreakProvider);
-    final reflectionsAsync = ref.watch(wisdomReflectionsStreamProvider(30));
+    final reflectionsAsync = ref.watch(wisdomReflectionsStreamProvider);
     final savedWisdomAsync = ref.watch(savedWisdomStreamProvider);
 
     return Scaffold(
@@ -235,7 +235,7 @@ class WisdomTrackerScreen extends ConsumerWidget {
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
-                                            'Reflected ${_formatDate(reflection.reflectedAt)}',
+                                            'Reflected ${_formatDate(_dateFromDynamic(reflection['createdAt']))}',
                                             style: TextStyle(
                                               color: Colors.grey[400],
                                               fontSize: 12,
@@ -243,11 +243,12 @@ class WisdomTrackerScreen extends ConsumerWidget {
                                           ),
                                         ],
                                       ),
-                                      if (reflection.reflectionText !=
+                                      if ((reflection['reflection']
+                                              as String?) !=
                                           null) ...[
                                         const SizedBox(height: 8),
                                         Text(
-                                          reflection.reflectionText!,
+                                          reflection['reflection'] as String,
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 14,
@@ -257,24 +258,24 @@ class WisdomTrackerScreen extends ConsumerWidget {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ],
-                                      if (reflection.moodBefore != null ||
-                                          reflection.moodAfter != null) ...[
+                                      if (reflection['moodBefore'] != null ||
+                                          reflection['moodAfter'] != null) ...[
                                         const SizedBox(height: 8),
                                         Row(
                                           children: [
-                                            if (reflection.moodBefore !=
+                                            if (reflection['moodBefore'] !=
                                                 null) ...[
                                               Text(
-                                                'Mood: ${reflection.moodBefore}',
+                                                'Mood: ${reflection['moodBefore']}',
                                                 style: TextStyle(
                                                   color: Colors.grey[400],
                                                   fontSize: 11,
                                                 ),
                                               ),
                                             ],
-                                            if (reflection.moodAfter !=
+                                            if (reflection['moodAfter'] !=
                                                 null) ...[
-                                              if (reflection.moodBefore !=
+                                              if (reflection['moodBefore'] !=
                                                   null) ...[
                                                 Text(' → ',
                                                     style: TextStyle(
@@ -282,7 +283,7 @@ class WisdomTrackerScreen extends ConsumerWidget {
                                                         fontSize: 11)),
                                               ],
                                               Text(
-                                                '${reflection.moodAfter}',
+                                                '${reflection['moodAfter']}',
                                                 style: const TextStyle(
                                                   color: AppColors.success,
                                                   fontSize: 11,
@@ -334,5 +335,25 @@ class WisdomTrackerScreen extends ConsumerWidget {
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }
+  }
+
+  DateTime? _dateFromDynamic(Object? v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
+    if (v is String) {
+      final parsed = int.tryParse(v);
+      if (parsed != null) return DateTime.fromMillisecondsSinceEpoch(parsed);
+      try {
+        return DateTime.parse(v);
+      } catch (_) {
+        return null;
+      }
+    }
+    if (v is Map && v['seconds'] != null) {
+      final seconds = v['seconds'] as int? ?? 0;
+      return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+    }
+    return null;
   }
 }

@@ -16,13 +16,13 @@ class ConnectedDevicesScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Connected Devices', style: TextStyle(color: Colors.white)),
+        title: const Text('Connected Devices',
+            style: TextStyle(color: Colors.white)),
       ),
       body: const Center(
-        child: Text('No devices connected', style: TextStyle(color: Colors.white)),
+        child:
+            Text('No devices connected', style: TextStyle(color: Colors.white)),
       ),
     );
   }
 }
-
-

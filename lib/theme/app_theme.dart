@@ -19,7 +19,7 @@ class AppTheme {
         onSurface: AppColors.textPrimary,
         onError: AppColors.textPrimary,
       ),
-      
+
       // Typography
       textTheme: TextTheme(
         displayLarge: GoogleFonts.poppins(
@@ -63,7 +63,7 @@ class AppTheme {
           color: AppColors.textPrimary,
         ),
       ),
-      
+
       // Card Theme
       cardTheme: CardThemeData(
         color: AppColors.surface,
@@ -73,7 +73,7 @@ class AppTheme {
           side: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
-      
+
       // Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -86,7 +86,7 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         ),
       ),
-      
+
       // Input Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -108,4 +108,3 @@ class AppTheme {
     );
   }
 }
-

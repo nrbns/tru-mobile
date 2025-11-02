@@ -115,7 +115,7 @@ class _WisdomDetailScreenState extends ConsumerState<WisdomDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              wisdom.source,
+                              wisdom.source ?? 'Wisdom',
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
@@ -123,7 +123,7 @@ class _WisdomDetailScreenState extends ConsumerState<WisdomDetailScreen> {
                               ),
                             ),
                             Text(
-                              wisdom.category,
+                              wisdom.category ?? '',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: AppColors.textSecondary,
@@ -284,16 +284,16 @@ class _WisdomDetailScreenState extends ConsumerState<WisdomDetailScreen> {
                               ),
                               const SizedBox(height: 12),
                               if (wisdom.author != null) ...[
-                                _buildMetadataRow('Author', wisdom.author!),
+                                _buildMetadataRow('Author', wisdom.author),
                                 const SizedBox(height: 8),
                               ],
                               if (wisdom.era != null) ...[
-                                _buildMetadataRow('Era', wisdom.era!),
+                                _buildMetadataRow('Era', wisdom.era),
                                 const SizedBox(height: 8),
                               ],
                               if (wisdom.tradition != null) ...[
                                 _buildMetadataRow(
-                                    'Tradition', wisdom.tradition!),
+                                    'Tradition', wisdom.tradition),
                                 const SizedBox(height: 8),
                               ],
                               _buildMetadataRow('Level', wisdom.level),
@@ -448,7 +448,7 @@ class _WisdomDetailScreenState extends ConsumerState<WisdomDetailScreen> {
     );
   }
 
-  Widget _buildMetadataRow(String label, String value) {
+  Widget _buildMetadataRow(String label, String? value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -464,7 +464,7 @@ class _WisdomDetailScreenState extends ConsumerState<WisdomDetailScreen> {
         ),
         Expanded(
           child: Text(
-            value,
+            value ?? '—',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 13,

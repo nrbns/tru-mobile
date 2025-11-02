@@ -7,15 +7,17 @@ final currentTierProvider = FutureProvider<SubscriptionTier>((ref) async {
   return ref.watch(subscriptionServiceProvider).getCurrentTier();
 });
 
-final subscriptionStatusProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final subscriptionStatusProvider =
+    FutureProvider<Map<String, dynamic>>((ref) async {
   return ref.watch(subscriptionServiceProvider).getSubscriptionStatus();
 });
 
-final subscriptionLimitsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final subscriptionLimitsProvider =
+    FutureProvider<Map<String, dynamic>>((ref) async {
   return ref.watch(subscriptionServiceProvider).getLimits();
 });
 
-final featureAvailableProvider = FutureProvider.family<bool, String>((ref, feature) async {
+final featureAvailableProvider =
+    FutureProvider.family<bool, String>((ref, feature) async {
   return ref.watch(subscriptionServiceProvider).isFeatureAvailable(feature);
 });
-

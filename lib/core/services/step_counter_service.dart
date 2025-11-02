@@ -7,11 +7,11 @@ import 'activity_tracking_service.dart';
 class StepCounterService {
   static const MethodChannel _channel = MethodChannel('truresetx/step_counter');
   final ActivityTrackingService _activityService = ActivityTrackingService();
-  
+
   StreamController<int>? _stepsController;
   StreamSubscription<int>? _stepsSubscription;
   Timer? _syncTimer;
-  
+
   bool _isListening = false;
   int _lastSyncedSteps = 0;
 
@@ -120,4 +120,3 @@ class StepCounterService {
     );
   }
 }
-

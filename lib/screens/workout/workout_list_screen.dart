@@ -319,9 +319,10 @@ class _WorkoutListScreenState extends State<WorkoutListScreen> {
                                   const SizedBox(height: 8),
                                   ElevatedButton(
                                     onPressed: () {
-                                      context.push('/home/workouts/player', extra: {
-                                        'name': workout.title,
-                                      });
+                                      context.push('/home/workouts/player',
+                                          extra: {
+                                            'name': workout.title,
+                                          });
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primary,

@@ -3,19 +3,22 @@ import '../services/calendar_events_service.dart';
 import '../models/calendar_event_model.dart';
 
 /// Provider for CalendarEventsService
-final calendarEventsServiceProvider = Provider((ref) => CalendarEventsService());
+final calendarEventsServiceProvider =
+    Provider((ref) => CalendarEventsService());
 
 /// Provider for events in a month
-final monthEventsProvider = FutureProvider.family<List<CalendarEventModel>, Map<String, dynamic>>((ref, params) async {
+final monthEventsProvider =
+    FutureProvider.family<List<CalendarEventModel>, Map<String, dynamic>>(
+        (ref, params) async {
   final service = ref.watch(calendarEventsServiceProvider);
   final year = params['year'] as int;
   final month = params['month'] as int;
   final tradition = params['tradition'] as String?;
   final filterTypes = params['filterTypes'] as List<EventType>?;
-  
+
   final startDate = DateTime(year, month, 1);
   final endDate = DateTime(year, month + 1, 0, 23, 59, 59);
-  
+
   return service.getEventsForDateRange(
     startDate: startDate,
     endDate: endDate,
@@ -25,12 +28,14 @@ final monthEventsProvider = FutureProvider.family<List<CalendarEventModel>, Map<
 });
 
 /// StreamProvider for real-time month events
-final monthEventsStreamProvider = StreamProvider.family<List<CalendarEventModel>, Map<String, dynamic>>((ref, params) {
+final monthEventsStreamProvider =
+    StreamProvider.family<List<CalendarEventModel>, Map<String, dynamic>>(
+        (ref, params) {
   final service = ref.watch(calendarEventsServiceProvider);
   final year = params['year'] as int;
   final month = params['month'] as int;
   final tradition = params['tradition'] as String?;
-  
+
   return service.streamEventsForMonth(
     year: year,
     month: month,
@@ -39,17 +44,39 @@ final monthEventsStreamProvider = StreamProvider.family<List<CalendarEventModel>
 });
 
 /// Provider for events on a specific date
-final dateEventsProvider = FutureProvider.family<List<CalendarEventModel>, DateTime>((ref, date) async {
+final dateEventsProvider =
+    FutureProvider.family<List<CalendarEventModel>, DateTime>(
+        (ref, date) async {
   final service = ref.watch(calendarEventsServiceProvider);
   return service.getEventsForDate(date);
 });
 
+/// StreamProvider for real-time events on a specific date
+final dateEventsStreamProvider =
+    StreamProvider.family<List<CalendarEventModel>, DateTime>((ref, date) {
+  final service = ref.watch(calendarEventsServiceProvider);
+  final startOfDay = DateTime(date.year, date.month, date.day);
+  final endOfDay = startOfDay.add(const Duration(days: 1)).subtract(
+        const Duration(seconds: 1),
+      );
+  return service.streamEventsForMonth(
+    year: date.year,
+    month: date.month,
+  ).map((events) => events.where((event) {
+    final eventDate = event.date;
+    return eventDate.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
+        eventDate.isBefore(endOfDay.add(const Duration(seconds: 1)));
+  }).toList());
+});
+
 /// Provider for upcoming events
-final upcomingEventsProvider = FutureProvider.family<List<CalendarEventModel>, Map<String, dynamic>>((ref, params) async {
+final upcomingEventsProvider =
+    FutureProvider.family<List<CalendarEventModel>, Map<String, dynamic>>(
+        (ref, params) async {
   final service = ref.watch(calendarEventsServiceProvider);
   final days = params['days'] as int? ?? 30;
   final filterTypes = params['filterTypes'] as List<EventType>?;
-  
+
   return service.getUpcomingEvents(
     days: days,
     filterTypes: filterTypes,
@@ -57,12 +84,14 @@ final upcomingEventsProvider = FutureProvider.family<List<CalendarEventModel>, M
 });
 
 /// Provider for festivals
-final festivalsProvider = FutureProvider.family<List<CalendarEventModel>, Map<String, dynamic>>((ref, params) async {
+final festivalsProvider =
+    FutureProvider.family<List<CalendarEventModel>, Map<String, dynamic>>(
+        (ref, params) async {
   final service = ref.watch(calendarEventsServiceProvider);
   final tradition = params['tradition'] as String?;
   final startDate = params['startDate'] as DateTime?;
   final endDate = params['endDate'] as DateTime?;
-  
+
   return service.getFestivals(
     tradition: tradition,
     startDate: startDate,
@@ -71,11 +100,11 @@ final festivalsProvider = FutureProvider.family<List<CalendarEventModel>, Map<St
 });
 
 /// Provider for moon phases in a date range
-final moonPhasesProvider = Provider.family<List<MoonPhaseData>, Map<String, DateTime>>((ref, params) {
+final moonPhasesProvider =
+    Provider.family<List<MoonPhaseData>, Map<String, DateTime>>((ref, params) {
   final service = ref.watch(calendarEventsServiceProvider);
   final startDate = params['start']!;
   final endDate = params['end']!;
-  
+
   return service.getMoonPhases(startDate, endDate);
 });
-

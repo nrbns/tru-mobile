@@ -3,7 +3,8 @@ import '../models/bio_spiritual_sync.dart';
 
 class BioSpiritualSyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  CollectionReference get _syncRef => _firestore.collection('bio_spiritual_sync');
+  CollectionReference get _syncRef =>
+      _firestore.collection('bio_spiritual_sync');
 
   Future<void> saveSyncData(BioSpiritualSyncData data) async {
     await _syncRef.add(data.toMap());

@@ -132,15 +132,60 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
-    // Karma logs
-    match /karma_logs/{logId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Karma logs
+      match /karma_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Other user subcollections - only owner can read/write
-    match /{subcollection=**} {
-      allow read, write: if isOwner(uid);
-    }
+      // App state (persistent UI state)
+      match /app_state/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Today's data
+      match /today/{dateKey} {
+        allow read, write: if isOwner(uid);
+        
+        // Calendar subcollection
+        match /calendar/{eventId} {
+          allow read, write: if isOwner(uid);
+        }
+      }
+
+      // Fasting sessions
+      match /fasting_sessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Meal logs
+      match /meal_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Practice logs (spiritual practices)
+      match /practice_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Mood logs
+      match /mood_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Agent inbox
+      match /agent_inbox/{messageId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Discipline contracts
+      match /contracts/{contractId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Other user subcollections - only owner can read/write
+      match /{subcollection=**} {
+        allow read, write: if isOwner(uid);
+      }
     }
 
     // Public catalogs - read-only for all authenticated users
@@ -257,6 +302,24 @@ service cloud.firestore {
 
     // Lessons (global, read-only for users)
     match /lessons/{lessonId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Mantras (global, read-only for users)
+    match /mantras/{mantraId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Sacred Verses (global, read-only for users)
+    match /sacred_verses/{verseId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Wisdom Posts (global, read-only for users)
+    match /wisdom_posts/{postId} {
       allow read: if isAuthenticated();
       allow write: if false; // Only via Cloud Functions
     }

@@ -59,12 +59,14 @@ dependencies:
   path_provider: ^2.1.2
   just_audio: ^0.9.36
   flutter_dotenv: ^5.0.2
+  camera: ^0.11.0+2
   
   # Food & Nutrition APIs
   flutter_barcode_scanner: ^2.0.0
   flutter_tts: ^4.0.2
   lottie: ^3.1.2
   wakelock_plus: ^1.2.7
+  youtube_player_iframe: ^5.2.2
 
 dev_dependencies:
   flutter_test:
@@ -83,4 +85,5 @@ flutter:
     - assets/images/truresetx_logo.png
     - assets/icons/truresetx_logo.svg
     - assets/.env
+    - assets/wisdom_today.json
 

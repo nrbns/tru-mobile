@@ -2,10 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/spiritual_content_service.dart';
 
 /// Provider for SpiritualContentService
-final spiritualContentServiceProvider = Provider((ref) => SpiritualContentService());
+final spiritualContentServiceProvider =
+    Provider((ref) => SpiritualContentService());
 
 /// StreamProvider for mantras
-final mantrasProvider = StreamProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>((ref, params) {
+final mantrasProvider =
+    StreamProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>(
+        (ref, params) {
   final service = ref.watch(spiritualContentServiceProvider);
   return service.streamMantras(
     traditions: params['traditions'] as List<String>?,
@@ -14,7 +17,9 @@ final mantrasProvider = StreamProvider.family<List<Map<String, dynamic>>, Map<St
 });
 
 /// FutureProvider for practices
-final practicesProvider = FutureProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>((ref, params) async {
+final practicesProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, Map<String, dynamic>>(
+        (ref, params) async {
   final service = ref.watch(spiritualContentServiceProvider);
   return service.getPractices(
     traditions: params['traditions'] as List<String>?,
@@ -27,4 +32,3 @@ final dailyWisdomProvider = FutureProvider((ref) async {
   final service = ref.watch(spiritualContentServiceProvider);
   return service.getDailyWisdom();
 });
-

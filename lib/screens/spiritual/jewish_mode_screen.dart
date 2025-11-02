@@ -10,7 +10,8 @@ class JewishModeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final lessons = ref.watch(jewishLessonsProvider({'category': 'Torah', 'limit': 5}));
+    final lessons =
+        ref.watch(jewishLessonsProvider({'category': 'Torah', 'limit': 5}));
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -25,7 +26,11 @@ class JewishModeScreen extends ConsumerWidget {
                     onPressed: () => context.pop(),
                   ),
                   const Expanded(
-                    child: Text('Jewish Mode', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
+                    child: Text('Jewish Mode',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -43,9 +48,13 @@ class JewishModeScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text((it['topic'] ?? 'Lesson') as String, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                            Text((it['topic'] ?? 'Lesson') as String,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600)),
                             const SizedBox(height: 8),
-                            Text((it['text'] ?? '') as String, style: TextStyle(color: Colors.grey[300])),
+                            Text((it['text'] ?? '') as String,
+                                style: TextStyle(color: Colors.grey[300])),
                           ],
                         ),
                       ),
@@ -53,7 +62,8 @@ class JewishModeScreen extends ConsumerWidget {
                   },
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (_, __) => const Center(child: Text('Error', style: TextStyle(color: Colors.red))),
+                error: (_, __) => const Center(
+                    child: Text('Error', style: TextStyle(color: Colors.red))),
               ),
             ),
           ],

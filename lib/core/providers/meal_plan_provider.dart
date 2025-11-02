@@ -7,7 +7,7 @@ final activeMealPlanProvider = StreamProvider<Map<String, dynamic>?>((ref) {
   return ref.watch(mealPlanServiceProvider).getActiveMealPlan();
 });
 
-final todayMealsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final todayMealsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(mealPlanServiceProvider).getTodayMeals();
 });
-

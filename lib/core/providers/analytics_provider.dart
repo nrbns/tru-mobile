@@ -7,32 +7,39 @@ final correlationsProvider = FutureProvider<Map<String, double>>((ref) async {
   return ref.watch(analyticsServiceProvider).getMoodCorrelations();
 });
 
-final crossDomainInsightsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final crossDomainInsightsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(analyticsServiceProvider).getCrossDomainInsights();
 });
 
-final weeklyComparisonProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final weeklyComparisonProvider =
+    FutureProvider<Map<String, dynamic>>((ref) async {
   return ref.watch(analyticsServiceProvider).getWeeklyComparison();
 });
 
-final metricTrendProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, metric) async {
+final metricTrendProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>(
+        (ref, metric) async {
   return ref.watch(analyticsServiceProvider).getMetricTrend(metric: metric);
 });
 
 /// Trend providers for dashboard
-final moodTrendsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final moodTrendsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(analyticsServiceProvider).getMoodTrends();
 });
 
-final nutritionTrendsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final nutritionTrendsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(analyticsServiceProvider).getNutritionTrends();
 });
 
-final workoutTrendsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final workoutTrendsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(analyticsServiceProvider).getWorkoutTrends();
 });
 
-final spiritualTrendsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final spiritualTrendsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(analyticsServiceProvider).getSpiritualTrends();
 });
-

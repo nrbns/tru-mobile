@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 /// TruResetX Logo Widget
-/// 
+///
 /// Displays the TruResetX logo in SVG format with optional size customization
 class AppLogo extends StatelessWidget {
   final double? width;
@@ -41,7 +41,7 @@ class AppLogo extends StatelessWidget {
 }
 
 /// TruResetX Logo with PNG fallback
-/// 
+///
 /// Uses PNG image for better compatibility where SVG might not render well
 class AppLogoPng extends StatelessWidget {
   final double? width;
@@ -65,4 +65,3 @@ class AppLogoPng extends StatelessWidget {
     );
   }
 }
-
