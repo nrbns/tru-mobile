@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/backend_providers.dart';
 import '../../data/models/food_models.dart';
+import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/error_state.dart';
 import 'food_scanner.dart';
 import 'manual_food_input.dart';
 import 'water_logging_screen.dart';
@@ -337,17 +339,34 @@ class _FoodTrackingScreenState extends ConsumerState<FoodTrackingScreen> {
     final searchResults = ref.watch(foodSearchProvider(query));
 
     return searchResults.when(
-      data: (results) => ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: results.foods.length,
-        itemBuilder: (context, index) {
-          final food = results.foods[index];
-          return _buildFoodItem(food);
-        },
-      ),
+      data: (results) {
+        if (results.foods.isEmpty) {
+          return EmptyListState(
+            message: 'No foods found. Try a different search term.',
+            actionLabel: 'Add Manually',
+            onAction: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ManualFoodInputScreen(
+                  onFoodAdded: (_) {},
+                ),
+              ),
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: results.foods.length,
+          itemBuilder: (context, index) {
+            final food = results.foods[index];
+            return _buildFoodItem(food);
+          },
+        );
+      },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: Text('Error searching foods: $error'),
+      error: (error, stack) => ErrorState(
+        message: 'Failed to search foods',
+        details: error.toString(),
+        onRetry: () => ref.refresh(foodSearchProvider(query)),
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:truresetx/data/providers/backend_providers.dart';
 import 'package:truresetx/core/services/supabase_edge_functions.dart';
 import 'package:truresetx/core/services/current_user_provider.dart';
 import 'package:truresetx/data/models/mood_models.dart';
+import 'package:truresetx/core/widgets/error_state.dart';
 
 class MoodTrackingScreen extends ConsumerStatefulWidget {
   const MoodTrackingScreen({super.key});
@@ -113,20 +114,10 @@ class _MoodTrackingScreenState extends ConsumerState<MoodTrackingScreen> {
       body: who5Items.when(
         data: (items) => _buildAssessment(items),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error loading assessment: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(who5ItemsProvider),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => ErrorState(
+          message: 'Failed to load assessment',
+          details: error.toString(),
+          onRetry: () => ref.invalidate(who5ItemsProvider),
         ),
       ),
     );

@@ -7,13 +7,16 @@ import '../repositories/list_repository.dart';
 
 const Uuid _uuid = Uuid();
 
-// Lists providers
+// Lists providers - using autoDispose with keepAlive for tab data
 final listsProvider =
-    StateNotifierProvider<ListsNotifier, List<WellnessList>>((ref) {
+    StateNotifierProvider.autoDispose<ListsNotifier, List<WellnessList>>((ref) {
+  // Keep alive to prevent refetch on tab switch
+  ref.keepAlive();
   return ListsNotifier(ref.read(listRepositoryProvider));
 });
 
-final listByIdProvider = Provider.family<WellnessList?, String>((ref, id) {
+final listByIdProvider =
+    Provider.autoDispose.family<WellnessList?, String>((ref, id) {
   final lists = ref.watch(listsProvider);
   try {
     return lists.firstWhere((list) => list.id == id);
@@ -22,15 +25,15 @@ final listByIdProvider = Provider.family<WellnessList?, String>((ref, id) {
   }
 });
 
-final listsByCategoryProvider =
-    Provider.family<List<WellnessList>, ListCategory>((ref, category) {
+final listsByCategoryProvider = Provider.autoDispose
+    .family<List<WellnessList>, ListCategory>((ref, category) {
   final lists = ref.watch(listsProvider);
   return lists.where((list) => list.category == category).toList();
 });
 
 // Items providers
 final itemsByTypeProvider =
-    Provider.family<List<ListItem>, ListItemType>((ref, type) {
+    Provider.autoDispose.family<List<ListItem>, ListItemType>((ref, type) {
   final lists = ref.watch(listsProvider);
   final allItems = <ListItem>[];
   for (final list in lists) {
@@ -40,7 +43,8 @@ final itemsByTypeProvider =
 });
 
 // Statistics providers
-final completionStatsProvider = Provider<Map<String, double>>((ref) {
+final completionStatsProvider =
+    Provider.autoDispose<Map<String, double>>((ref) {
   final lists = ref.watch(listsProvider);
   final stats = <String, double>{};
 

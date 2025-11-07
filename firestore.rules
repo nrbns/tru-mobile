@@ -11,10 +11,24 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
+    // Helper function to check if user has premium access
+    // Premium status is written server-side only (via Cloud Functions/webhooks)
+    function hasPremium() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/entitlements/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/entitlements/$(request.auth.uid)).data.isPremium == true;
+    }
+
+    // Entitlements collection - read-only for users, write-only via Cloud Functions
+    match /entitlements/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false; // Only Cloud Functions can write entitlements
+    }
+
     // Users collection - only owner can read/write
     match /users/{uid} {
       allow read, create, update: if isOwner(uid);
-      allow delete: if false; // Prevent deletion
+      allow delete: if false; // Prevent deletion - use soft delete via Cloud Function
       
       // Chat sessions subcollection
       match /chat_sessions/{sessionId} {
@@ -72,65 +86,65 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
-    // Workout plans
-    match /workout_plans/{planId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Workout plans
+      match /workout_plans/{planId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Meditation progress
-    match /meditation_progress/{sessionId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Meditation progress
+      match /meditation_progress/{sessionId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // CBT journals
-    match /cbt_journals/{journalId} {
-      allow read, write: if isOwner(uid);
-    }
+      // CBT journals
+      match /cbt_journals/{journalId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Therapy chats
-    match /therapy_chats/{chatId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Therapy chats
+      match /therapy_chats/{chatId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Safety plans
-    match /safety_plans/{planId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Safety plans
+      match /safety_plans/{planId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Peer support chats
-    match /peer_support_chats/{chatId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Peer support chats
+      match /peer_support_chats/{chatId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Mental health assessments
-    match /assessments/{assessmentId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Mental health assessments
+      match /assessments/{assessmentId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Gratitude journals
-    match /gratitude_journals/{journalId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Gratitude journals
+      match /gratitude_journals/{journalId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Story reflections
-    match /story_reflections/{reflectionId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Story reflections
+      match /story_reflections/{reflectionId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Video watch history
-    match /video_watches/{watchId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Video watch history
+      match /video_watches/{watchId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Affirmation sessions
-    match /affirmation_sessions/{sessionId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Affirmation sessions
+      match /affirmation_sessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+      }
 
-    // Yoga session history
-    match /yoga_sessions/{sessionId} {
-      allow read, write: if isOwner(uid);
-    }
+      // Yoga session history
+      match /yoga_sessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+      }
 
       // Karma logs
       match /karma_logs/{logId} {
@@ -179,6 +193,11 @@ service cloud.firestore {
 
       // Discipline contracts
       match /contracts/{contractId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Weight metrics
+      match /metrics_weight/{metricId} {
         allow read, write: if isOwner(uid);
       }
 
@@ -323,9 +342,5 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if false; // Only via Cloud Functions
     }
-
-    // Meal Plans (user-specific, already covered by users/{uid}/meal_plans)
-    // Meal Logs (user-specific, already covered by users/{uid}/meal_logs)
   }
 }
-

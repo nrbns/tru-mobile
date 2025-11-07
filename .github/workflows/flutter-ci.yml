@@ -1,0 +1,108 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  analyze:
+    name: Analyze & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+      
+      - name: Install dependencies
+        working-directory: truresetx
+        run: flutter pub get
+      
+      - name: Analyze code
+        working-directory: truresetx
+        run: dart analyze --fatal-infos
+      
+      - name: Check formatting
+        working-directory: truresetx
+        run: dart format --set-exit-if-changed .
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+      
+      - name: Install dependencies
+        working-directory: truresetx
+        run: flutter pub get
+      
+      - name: Run tests
+        working-directory: truresetx
+        run: flutter test --coverage
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: truresetx/coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    needs: [analyze, test]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+      
+      - name: Install dependencies
+        working-directory: truresetx
+        run: flutter pub get
+      
+      - name: Build APK
+        working-directory: truresetx
+        run: flutter build apk --release
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-apk
+          path: truresetx/build/app/outputs/flutter-apk/app-release.apk
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    needs: [analyze, test]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+      
+      - name: Install dependencies
+        working-directory: truresetx
+        run: flutter pub get
+      
+      - name: Build iOS
+        working-directory: truresetx
+        run: flutter build ios --release --no-codesign
+
