@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "exclude": [
+    "supabase/functions/**",
+    "tools/ingest_embeddings_deno.ts",
+    "**/node_modules",
+    "build"
+  ]
+}

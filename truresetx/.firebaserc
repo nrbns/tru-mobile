@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "truresetx-lite"
+  },
+  "targets": {
+    "truresetx-lite": {
+      "hosting": {
+        "truresetx-web": [
+          "truresetx-lite"
+        ]
+      }
+    }
+  }
+}

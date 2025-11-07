@@ -1,0 +1,38 @@
+{
+	"flutter": {
+		"platforms": {
+			"android": {
+				"default": {
+					"projectId": "truresetx-lite",
+					"appId": "1:764075652387:android:2cb4db4a8d3548333dc896",
+					"fileOutput": "android/app/google-services.json"
+				}
+			},
+			"dart": {
+				"lib/firebase_options.dart": {
+					"projectId": "truresetx-lite",
+					"configurations": {
+						"android": "1:764075652387:android:2cb4db4a8d3548333dc896",
+						"ios": "1:764075652387:ios:0d806803e2631c213dc896"
+					}
+				}
+			}
+		}
+	},
+	"functions": {
+		"source": "functions"
+	},
+	"hosting": [
+		{
+			"target": "truresetx-web",
+			"public": "build/web",
+			"ignore": ["firebase.json", ".firebase/**"],
+			"rewrites": [
+				{
+					"source": "**",
+					"destination": "/index.html"
+				}
+			]
+		}
+	]
+}

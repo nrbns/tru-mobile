@@ -1,0 +1,18 @@
+{
+  "name": "truresetx-tools",
+  "private": true,
+  "scripts": {
+    "socket": "node socket_server.js",
+    "ingest": "ts-node ingest_embeddings.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "openai": "^4.0.0",
+    "socket.io": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.22",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.0"
+  }
+}

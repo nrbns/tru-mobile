@@ -1,0 +1,9 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build and upload AAB to internal track"
+  lane :deploy_internal do
+    gradle(task: "bundle", build_type: "Release")
+    upload_to_play_store(track: 'internal')
+  end
+end

@@ -1,0 +1,38 @@
+name: Android CI Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build AAB
+        run: flutter build appbundle --release
+      - name: Upload to Play (Fastlane)
+        env:
+          PLAY_STORE_JSON: ${{ secrets.PLAY_STORE_JSON }}
+        run: |
+          if [ -z "$PLAY_STORE_JSON" ]; then
+            echo "ERROR: PLAY_STORE_JSON secret not set" >&2
+            exit 1
+          fi
+          KEY_PATH="${RUNNER_TEMP}/play_store.json"
+          echo "$PLAY_STORE_JSON" > "$KEY_PATH"
+          gem install fastlane -v 2.222.0
+          export PLAY_STORE_JSON_KEY_PATH="$KEY_PATH"
+          bundle exec fastlane android deploy_internal

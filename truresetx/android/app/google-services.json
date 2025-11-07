@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "764075652387",
+    "project_id": "truresetx-lite",
+    "storage_bucket": "truresetx-lite.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:764075652387:android:2cb4db4a8d3548333dc896",
+        "android_client_info": {
+          "package_name": "com.truresetx.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "764075652387-hk21mq99pmo04sm8t2m99shb017oo24k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAJ_Spxc9axV1x3skUCXtSRxurzOsib08A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "764075652387-hk21mq99pmo04sm8t2m99shb017oo24k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "764075652387-5paakseem818mdag7hkbhelohujef1f3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "trureset"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

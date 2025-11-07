@@ -1,0 +1,2 @@
+This is a small sample document used to test the ingestion script.
+It contains a couple of sentences to produce an embedding.
