@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../data/providers/list_providers.dart';
 import '../../data/models/wellness_list.dart';
-import '../lists/lists_screen.dart';
-import '../lists/list_detail_screen.dart';
 import 'today_card.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -13,268 +12,209 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final lists = ref.watch(listsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            SvgPicture.asset(
-              'assets/icons/logo.svg',
-              width: 36,
-              height: 36,
-              fit: BoxFit.contain,
+      body: CustomScrollView(
+        slivers: [
+          // App Bar
+          SliverAppBar(
+            expandedHeight: 120,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Row(
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/logo.svg',
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'TruResetX',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+              centerTitle: false,
+              titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
             ),
-            const SizedBox(width: 12),
-            const Text('TruResetX'),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Implement notifications
-            },
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () {
+                  // TODO: Implement notifications
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => context.push('/settings'),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Section
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome to Your Wellness Journey',
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
+
+          // Content
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Today Card with all metrics
+                  const TodayCard(),
+                  const SizedBox(height: 24),
+
+                  // Quick Actions Section
+                  Text(
+                    'Quick Actions',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _QuickActionsGrid(),
+                  const SizedBox(height: 24),
+
+                  // Discipline Score & Streak
+                  _DisciplineSection(),
+                  const SizedBox(height: 24),
+
+                  // Recent Activity
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Recent Lists',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => context.push('/lists'),
+                        child: const Text('View All'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (lists.isEmpty)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.inbox_outlined,
+                                size: 48,
+                                color: theme.colorScheme.onSurfaceVariant,
                               ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Track your progress across fitness, nutrition, mental health, and spiritual growth.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[600],
+                              const SizedBox(height: 12),
+                              Text(
+                                'No lists yet',
+                                style: theme.textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Create your first wellness list to get started',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () => context.push('/lists/add'),
+                                icon: const Icon(Icons.add),
+                                label: const Text('Create List'),
+                              ),
+                            ],
                           ),
-                    ),
-                  ],
-                ),
+                        ),
+                      ),
+                    )
+                  else
+                    ...lists
+                        .take(3)
+                        .map((list) => _buildListCard(context, list)),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Today card
-            const TodayCard(),
-            const SizedBox(height: 24),
-
-            // Quick Stats
-            Text(
-              'Quick Stats',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Total Lists',
-                    '${lists.length}',
-                    Icons.list_alt,
-                    Colors.blue,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Active Items',
-                    '${_getTotalActiveItems(lists)}',
-                    Icons.task_alt,
-                    Colors.green,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Completed Today',
-                    '${_getCompletedToday(lists)}',
-                    Icons.check_circle,
-                    Colors.orange,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildStatCard(
-                    context,
-                    'Streak',
-                    '${_getCurrentStreak(lists)}',
-                    Icons.local_fire_department,
-                    Colors.red,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Recent Lists
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Recent Lists',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (context) => const ListsScreen()),
-                    );
-                  },
-                  child: const Text('View All'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...lists.take(3).map((list) => _buildListCard(context, list)),
-            const SizedBox(height: 24),
-
-            // Category Overview
-            Text(
-              'Categories',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: ListCategory.values.map((category) {
-                final categoryLists =
-                    lists.where((list) => list.category == category).toList();
-                return _buildCategoryChip(
-                    context, category, categoryLists.length);
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(BuildContext context, String title, String value,
-      IconData icon, Color color) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-            ),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildListCard(BuildContext context, WellnessList list) {
+    final progress = list.completionPercentage;
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getCategoryColor(list.category),
-          child: Text(
-            list.icon ?? _getCategoryIcon(list.category),
-            style: const TextStyle(fontSize: 20),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () => context.push('/lists/detail/${list.id}'),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor:
+                    _getCategoryColor(list.category).withValues(alpha: 0.1),
+                child: Text(
+                  list.icon ?? _getCategoryIcon(list.category),
+                  style: const TextStyle(fontSize: 24),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      list.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${list.completedCount}/${list.totalCount} completed',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        backgroundColor: Colors.grey[300],
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _getCategoryColor(list.category),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ],
           ),
         ),
-        title: Text(list.name),
-        subtitle: Text('${list.completedCount}/${list.totalCount} completed'),
-        trailing: CircularProgressIndicator(
-          value: list.completionPercentage,
-          backgroundColor: Colors.grey[300],
-        ),
-        onTap: () {
-          // Navigate to list detail screen using direct route to ensure it works
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ListDetailScreen(listId: list.id),
-            ),
-          );
-        },
       ),
     );
-  }
-
-  Widget _buildCategoryChip(
-      BuildContext context, ListCategory category, int count) {
-    return Chip(
-      avatar: CircleAvatar(
-        backgroundColor: _getCategoryColor(category),
-        child: Text(
-          _getCategoryIcon(category),
-          style: const TextStyle(fontSize: 16),
-        ),
-      ),
-      label: Text('${_getCategoryName(category)} ($count)'),
-      backgroundColor: _getCategoryColor(category).withValues(alpha: 0.1),
-    );
-  }
-
-  int _getTotalActiveItems(List<WellnessList> lists) {
-    return lists.fold(
-        0,
-        (sum, list) =>
-            sum + list.items.where((item) => !item.isCompleted).length);
-  }
-
-  int _getCompletedToday(List<WellnessList> lists) {
-    final today = DateTime.now();
-    return lists.fold(0, (sum, list) {
-      return sum +
-          list.items.where((item) {
-            if (item.completedAt == null) return false;
-            final completedDate = item.completedAt!;
-            return completedDate.year == today.year &&
-                completedDate.month == today.month &&
-                completedDate.day == today.day;
-          }).length;
-    });
-  }
-
-  int _getCurrentStreak(List<WellnessList> lists) {
-    // Simple streak calculation - in a real app, this would be more sophisticated
-    return 7; // Placeholder
   }
 
   Color _getCategoryColor(ListCategory category) {
@@ -314,23 +254,261 @@ class HomeScreen extends ConsumerWidget {
         return '📝';
     }
   }
+}
 
-  String _getCategoryName(ListCategory category) {
-    switch (category) {
-      case ListCategory.fitness:
-        return 'Fitness';
-      case ListCategory.nutrition:
-        return 'Nutrition';
-      case ListCategory.mentalHealth:
-        return 'Mental Health';
-      case ListCategory.spiritual:
-        return 'Spiritual';
-      case ListCategory.habits:
-        return 'Habits';
-      case ListCategory.goals:
-        return 'Goals';
-      case ListCategory.general:
-        return 'General';
-    }
+class _QuickActionsGrid extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final actions = [
+      _QuickAction(
+        icon: Icons.monitor_weight_outlined,
+        label: 'Weight',
+        color: Colors.blue,
+        route: '/metrics/weight',
+      ),
+      _QuickAction(
+        icon: Icons.restaurant_outlined,
+        label: 'Meal',
+        color: Colors.green,
+        route: '/nutrition/manual',
+      ),
+      _QuickAction(
+        icon: Icons.fitness_center_outlined,
+        label: 'Workout',
+        color: Colors.red,
+        route: '/workout/start',
+      ),
+      _QuickAction(
+        icon: Icons.check_circle_outline,
+        label: 'Habit',
+        color: Colors.orange,
+        route: '/lists',
+      ),
+      _QuickAction(
+        icon: Icons.mood_outlined,
+        label: 'Mood',
+        color: Colors.purple,
+        route: '/mood',
+      ),
+      _QuickAction(
+        icon: Icons.note_add_outlined,
+        label: 'Note',
+        color: Colors.teal,
+        route: '/coach/chat',
+      ),
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.1,
+      ),
+      itemCount: actions.length,
+      itemBuilder: (context, index) {
+        final action = actions[index];
+        return _QuickActionCard(action: action);
+      },
+    );
+  }
+}
+
+class _QuickAction {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final String route;
+
+  _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.route,
+  });
+}
+
+class _QuickActionCard extends StatelessWidget {
+  final _QuickAction action;
+
+  const _QuickActionCard({required this.action});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+        ),
+      ),
+      child: InkWell(
+        onTap: () => context.push(action.route),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: action.color.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  action.icon,
+                  color: action.color,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                action.label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DisciplineSection extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final lists = ref.watch(listsProvider);
+
+    // Calculate discipline score (simplified)
+    final completedToday = _getCompletedToday(lists);
+    final totalHabits = lists
+        .where((l) => l.category == ListCategory.habits)
+        .fold(0, (sum, list) => sum + list.totalCount);
+    final disciplineScore = totalHabits > 0
+        ? ((completedToday / totalHabits) * 100).clamp(0, 100).toInt()
+        : 0;
+    final streak = _getCurrentStreak(lists);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Discipline Score',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.local_fire_department,
+                        size: 16,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$streak day streak',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$disciplineScore',
+                        style: theme.textTheme.displayMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: _getScoreColor(disciplineScore),
+                        ),
+                      ),
+                      Text(
+                        'out of 100',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: disciplineScore / 100,
+                      minHeight: 12,
+                      backgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _getScoreColor(disciplineScore),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getScoreColor(int score) {
+    if (score >= 80) return Colors.green;
+    if (score >= 60) return Colors.orange;
+    return Colors.red;
+  }
+
+  int _getCompletedToday(List<WellnessList> lists) {
+    final today = DateTime.now();
+    return lists.fold(0, (sum, list) {
+      return sum +
+          list.items.where((item) {
+            if (item.completedAt == null) return false;
+            final completedDate = item.completedAt!;
+            return completedDate.year == today.year &&
+                completedDate.month == today.month &&
+                completedDate.day == today.day;
+          }).length;
+    });
+  }
+
+  int _getCurrentStreak(List<WellnessList> lists) {
+    // Simple streak calculation - in a real app, this would be more sophisticated
+    return 7; // Placeholder
   }
 }
