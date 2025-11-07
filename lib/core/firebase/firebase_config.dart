@@ -1,0 +1,96 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'firebase_options.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+/// Firebase initialization and configuration
+class FirebaseConfig {
+  static Future<void> initialize() async {
+    // Initialize Firebase with platform-specific options
+    // On web this project hasn't been configured via FlutterFire CLI,
+    // so skip initialization to allow running the app locally.
+    // Initialize Firebase for all platforms where options are available.
+    // The generated `DefaultFirebaseOptions` contains web options. For
+    // native platforms it will throw if not configured; that's expected
+    // during local development when native apps aren't registered.
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (e) {
+      // If initialization fails on native platforms because options aren't
+      // configured, log and continue — but on web we expect initialization
+      // to succeed because generated web options are present.
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('Firebase initialization warning: $e');
+      }
+    }
+
+    // Configure Crashlytics and messaging only on non-web platforms
+    if (!kIsWeb) {
+      // Configure Crashlytics
+      FlutterError.onError = (errorDetails) {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+      };
+
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+
+      // Request notification permissions
+      final messaging = FirebaseMessaging.instance;
+      await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      // Get FCM token
+      final token = await messaging.getToken();
+      if (kDebugMode) {
+        print('FCM Token: $token');
+      }
+
+      // Set background message handler
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    }
+
+    // During local debug runs, point Firebase services to the local emulators
+    // ONLY if explicitly enabled via environment variable
+    // For production, use real Firebase services
+    if (kDebugMode) {
+      const useEmulator = bool.fromEnvironment('USE_FIREBASE_EMULATOR', defaultValue: false);
+      if (useEmulator) {
+        try {
+          // Functions emulator (matches the functions emulator default port used here)
+          FirebaseFunctions.instanceFor(region: 'asia-south1')
+              .useFunctionsEmulator('127.0.0.1', 5001);
+
+          // Firestore emulator
+          FirebaseFirestore.instance.useFirestoreEmulator('127.0.0.1', 8080);
+          if (kDebugMode) print('Using Firebase emulators');
+        } catch (e) {
+          // If emulator packages aren't available or methods differ, ignore in debug
+          if (kDebugMode) print('Emulator wiring skipped: $e');
+        }
+      } else {
+        if (kDebugMode) print('Using production Firebase services');
+      }
+    }
+  }
+}
+
+// Background message handler for notifications
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  // Handle background message
+  print('Background message: ${message.messageId}');
+}

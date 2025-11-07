@@ -1,0 +1,18 @@
+{
+  "name": "truresetx-blade-api",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.2.0",
+    "firebase-admin": "^12.5.0",
+    "node-fetch": "^3.3.2"
+  }
+}
+

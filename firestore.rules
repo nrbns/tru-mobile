@@ -1,0 +1,331 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the document
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Users collection - only owner can read/write
+    match /users/{uid} {
+      allow read, create, update: if isOwner(uid);
+      allow delete: if false; // Prevent deletion
+      
+      // Chat sessions subcollection
+      match /chat_sessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+        
+        // Messages subcollection
+        match /messages/{messageId} {
+          allow read, write: if isOwner(uid);
+        }
+      }
+      
+      // Voice analyses subcollection
+      match /voice_analyses/{analysisId} {
+        allow read, write: if isOwner(uid);
+      }
+      
+      // Wisdom reflections
+      match /wisdom_reflections/{reflectionId} {
+        allow read, write: if isOwner(uid);
+        allow create: if isOwner(uid);
+      }
+
+      // Saved wisdom
+      match /saved_wisdom/{wisdomId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Meal plans
+      match /meal_plans/{planId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Activity logs
+      match /activity_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Challenge progress
+      match /challenge_progress/{challengeId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Achievements
+      match /achievements/{achievementId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Snap meals (food photo recognition)
+      match /snap_meals/{mealId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Workout logs with sets/reps/weights
+      match /workout_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+    // Workout plans
+    match /workout_plans/{planId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Meditation progress
+    match /meditation_progress/{sessionId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // CBT journals
+    match /cbt_journals/{journalId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Therapy chats
+    match /therapy_chats/{chatId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Safety plans
+    match /safety_plans/{planId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Peer support chats
+    match /peer_support_chats/{chatId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Mental health assessments
+    match /assessments/{assessmentId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Gratitude journals
+    match /gratitude_journals/{journalId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Story reflections
+    match /story_reflections/{reflectionId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Video watch history
+    match /video_watches/{watchId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Affirmation sessions
+    match /affirmation_sessions/{sessionId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Yoga session history
+    match /yoga_sessions/{sessionId} {
+      allow read, write: if isOwner(uid);
+    }
+
+      // Karma logs
+      match /karma_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // App state (persistent UI state)
+      match /app_state/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Today's data
+      match /today/{dateKey} {
+        allow read, write: if isOwner(uid);
+        
+        // Calendar subcollection
+        match /calendar/{eventId} {
+          allow read, write: if isOwner(uid);
+        }
+      }
+
+      // Fasting sessions
+      match /fasting_sessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Meal logs
+      match /meal_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Practice logs (spiritual practices)
+      match /practice_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Mood logs
+      match /mood_logs/{logId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Agent inbox
+      match /agent_inbox/{messageId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Discipline contracts
+      match /contracts/{contractId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // Other user subcollections - only owner can read/write
+      match /{subcollection=**} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // Public catalogs - read-only for all authenticated users
+    match /exercises/{id} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    match /practices/{id} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    match /foods/{id} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions with moderation
+    }
+
+    // Wisdom library (global, read-only for users)
+    match /wisdom/{wisdomId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only admins can write via backend
+    }
+
+    // Calendar events (global, read-only for users)
+    match /calendar_events/{eventId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Challenges (global, read-only for users)
+    match /challenges/{challengeId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Badges (global, read-only for users)
+    match /badges/{badgeId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Meditations (global, read-only for users)
+    match /meditations/{meditationId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Ambient sounds (global, read-only for users)
+    match /ambient_sounds/{soundId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // CBT Exercises (global, read-only for users)
+    match /cbt_exercises/{exerciseId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Helplines (global, read-only for users)
+    match /helplines/{helplineId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only admins can write via backend
+    }
+
+    // Video Library (global, read-only for users)
+    match /video_library/{videoId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Spiritual Stories (global, read-only for users)
+    match /spiritual_stories/{storyId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Affirmations (global, read-only for users)
+    match /affirmations/{affirmationId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Sound Healing (global, read-only for users)
+    match /sound_healing/{soundId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Guided Visualizations (global, read-only for users)
+    match /guided_visualizations/{visualizationId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Yoga Sessions (global, read-only for users)
+    match /yoga_sessions/{sessionId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Yoga Poses (global, read-only for users)
+    match /yoga_poses/{poseId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Scriptures (global, read-only for users)
+    match /scriptures/{scriptureId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Lessons (global, read-only for users)
+    match /lessons/{lessonId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Mantras (global, read-only for users)
+    match /mantras/{mantraId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Sacred Verses (global, read-only for users)
+    match /sacred_verses/{verseId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Wisdom Posts (global, read-only for users)
+    match /wisdom_posts/{postId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only via Cloud Functions
+    }
+
+    // Meal Plans (user-specific, already covered by users/{uid}/meal_plans)
+    // Meal Logs (user-specific, already covered by users/{uid}/meal_logs)
+  }
+}
+

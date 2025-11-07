@@ -1,0 +1,537 @@
+// ignore_for_file: unused_local_variable
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'core/firebase/firebase_config.dart';
+import 'theme/app_theme.dart';
+import 'screens/splash_screen.dart';
+import 'screens/intro_screen.dart';
+import 'screens/auth/sign_in_screen.dart';
+import 'screens/auth/sign_up_screen.dart';
+import 'screens/auth/setup_goals_screen.dart';
+import 'screens/spiritual/belief_setup_screen.dart';
+import 'screens/spiritual/spirit_home_screen.dart';
+import 'screens/spiritual/app_detail_screen.dart';
+// imported spiritual screens
+import 'screens/spiritual/meditation_tracker_screen.dart';
+import 'screens/spiritual/journal_screen.dart';
+import 'screens/spiritual/media_library_screen.dart';
+import 'screens/spiritual/astrology_screen.dart';
+import 'screens/spiritual/planner_screen.dart';
+import 'screens/spiritual/profile_personalization_screen.dart';
+import 'screens/home/dashboard_screen.dart';
+import 'screens/mind/mind_screen.dart';
+import 'screens/spirit/spirit_screen.dart';
+import 'screens/profile/profile_screen.dart';
+import 'screens/chat/chatbot_screen.dart';
+import 'screens/profile/theme_settings_screen.dart';
+import 'screens/profile/notifications_settings_screen.dart';
+import 'screens/profile/privacy_settings_screen.dart';
+import 'screens/profile/connected_devices_screen.dart';
+import 'screens/not_found_screen.dart';
+import 'widgets/auth_gate.dart';
+import 'screens/mood/quick_log_screen.dart';
+import 'screens/mind/cbt_journal_screen.dart';
+import 'screens/spiritual/daily_practice_screen.dart';
+import 'screens/workout/workout_list_screen.dart';
+import 'screens/workout/workout_player_screen.dart';
+import 'screens/nutrition/water_tracker_screen.dart';
+import 'screens/analytics/weekly_progress_screen.dart';
+import 'screens/mood/mood_timeline_screen.dart';
+import 'screens/nutrition/nutrition_log_screen.dart';
+import 'screens/nutrition/ai_meal_planner_screen.dart';
+import 'screens/analytics/achievements_screen.dart';
+import 'screens/auth/otp_verification_screen.dart';
+import 'screens/auth/permissions_setup_screen.dart';
+import 'screens/spiritual/mantras_library_screen.dart';
+import 'screens/spiritual/audio_verse_player_screen.dart';
+import 'screens/spiritual/rituals_tracker_screen.dart';
+import 'screens/spiritual/calendar_view_screen.dart';
+import 'screens/spiritual/wisdom_feed_screen.dart';
+import 'screens/wisdom/daily_wisdom_screen.dart';
+import 'screens/wisdom/wisdom_library_screen.dart';
+import 'screens/wisdom/wisdom_legends_screen.dart';
+import 'screens/wisdom/wisdom_detail_screen.dart';
+import 'screens/wisdom/wisdom_tracker_screen.dart';
+import 'screens/spiritual/streaks_detail_screen.dart';
+import 'screens/spiritual/yoga_routine_screen.dart';
+import 'screens/mood/mood_correlation_screen.dart';
+import 'screens/mind/mood_coach_screen.dart';
+import 'screens/mind/guided_sessions_screen.dart';
+import 'screens/mind/sos_mode_screen.dart';
+import 'screens/mind/assessments_screen.dart';
+import 'screens/mind/results_screen.dart';
+import 'screens/mind/coach_inbox_screen.dart';
+import 'screens/workout/exercise_detail_screen.dart';
+import 'screens/workout/ar_assist_screen.dart';
+import 'screens/workout/workout_generator_wizard_screen.dart';
+import 'screens/nutrition/grocery_list_screen.dart';
+import 'screens/nutrition/fasting_mode_screen.dart';
+import 'screens/nutrition/nutrition_hub_screen.dart';
+import 'screens/home/comprehensive_dashboard_screen.dart';
+import 'screens/analytics/enhanced_analytics_screen.dart';
+// removed unused imports: community_feed_screen, subscription_screen, wisdom_reflection_screen
+import 'screens/workout/workout_action_screen.dart';
+import 'screens/workout/workout_log_screen.dart';
+import 'screens/nutrition/nutrition_log_with_snap_screen.dart';
+import 'screens/workout/youtube_workout_screen.dart';
+// Agent screens
+import 'agent/agent_chat_screen.dart';
+import 'agent/agent_coach_overlay.dart';
+import 'agent/agent_voice_screen.dart';
+import 'agent/agent_posture_camera.dart';
+// Agentic feature screens
+import 'screens/agentic/energy_pulse_screen.dart';
+import 'screens/agentic/karma_tracker_screen.dart';
+import 'screens/agentic/dream_analyzer_screen.dart';
+import 'screens/agentic/spiritual_fitness_screen.dart';
+import 'screens/agentic/bond_level_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Load local environment variables (e.g. OPENAI_API_KEY)
+  // On some platforms (web) the .env file may not be available as an asset.
+  // Don't fail app startup if dotenv cannot find the file — log and continue.
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    // ignore: avoid_print
+    debugPrint('dotenv load failed: $e');
+  }
+
+  await FirebaseConfig.initialize();
+  runApp(
+    const ProviderScope(
+      child: TruResetXApp(),
+    ),
+  );
+}
+
+class TruResetXApp extends StatelessWidget {
+  const TruResetXApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      title: 'TruResetX',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.dark,
+      routerConfig: _router,
+    );
+  }
+}
+
+final GoRouter _router = GoRouter(
+  initialLocation: '/splash',
+  errorBuilder: (context, state) => const NotFoundScreen(),
+  routes: [
+    GoRoute(
+      path: '/splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/intro',
+      builder: (context, state) => const IntroScreen(),
+    ),
+    GoRoute(
+      path: '/sign-in',
+      builder: (context, state) => SignInScreen(
+        redirect: Uri.base.queryParameters['redirect'],
+      ),
+    ),
+    GoRoute(
+      path: '/sign-up',
+      builder: (context, state) => const SignUpScreen(),
+    ),
+    GoRoute(
+      path: '/otp-verification',
+      builder: (context, state) => const OTPVerificationScreen(),
+    ),
+    GoRoute(
+      path: '/permissions-setup',
+      builder: (context, state) => const PermissionsSetupScreen(),
+    ),
+    GoRoute(
+      path: '/setup-goals',
+      builder: (context, state) => const SetupGoalsScreen(),
+    ),
+    GoRoute(
+      path: '/belief-setup',
+      builder: (context, state) => const BeliefSetupScreen(),
+    ),
+    GoRoute(
+      path: '/home',
+      builder: (context, state) => const AuthGate(child: DashboardScreen()),
+      routes: [
+        GoRoute(
+          path: 'workouts',
+          builder: (context, state) => const WorkoutListScreen(),
+          routes: [
+            GoRoute(
+              path: 'generator',
+              builder: (context, state) => const WorkoutGeneratorWizardScreen(),
+            ),
+            GoRoute(
+              path: 'player',
+              builder: (context, state) {
+                final extra = state.extra as Map<String, dynamic>?;
+                return WorkoutPlayerScreen(
+                  exercises: extra?['exercises'] as List<Map<String, dynamic>>?,
+                  workoutName: extra?['name'] as String?,
+                );
+              },
+            ),
+            GoRoute(
+              path: 'exercise/:id',
+              builder: (context, state) => const ExerciseDetailScreen(),
+            ),
+            GoRoute(
+              path: 'ar-assist',
+              builder: (context, state) => const ARAssistScreen(),
+            ),
+            GoRoute(
+              path: 'action',
+              builder: (context, state) {
+                // Parse required parameters from query params or state.extra
+                final qp = state.uri.queryParameters;
+                final workoutId = qp['workoutId'] ?? '';
+                final workoutName = qp['workoutName'] ?? 'Workout';
+                final duration = qp['duration'] ?? '';
+                final difficulty = qp['difficulty'] ?? '';
+                final calories = qp['calories'] ?? '';
+                final emoji = qp['emoji'] ?? '';
+                // Allow passing exercises via state.extra as either a List or a Map containing 'exercises'
+                List<Map<String, dynamic>>? exercises;
+                final extra = state.extra;
+                if (extra is Map<String, dynamic> &&
+                    extra['exercises'] is List) {
+                  exercises = List<Map<String, dynamic>>.from(
+                      extra['exercises'] as List);
+                } else if (extra is List) {
+                  exercises = List<Map<String, dynamic>>.from(extra);
+                }
+
+                return WorkoutActionScreen(
+                  workoutId: workoutId,
+                  workoutName: workoutName,
+                  duration: duration,
+                  difficulty: difficulty,
+                  calories: calories,
+                  emoji: emoji,
+                  exercises: exercises,
+                );
+              },
+            ),
+            GoRoute(
+              path: 'youtube-channel',
+              builder: (context, state) {
+                // Allow channel id to be passed as query param e.g. ?channelId=UCxxxxx
+                final channelId = state.uri.queryParameters['channelId'] ?? '';
+                return YouTubeWorkoutScreen(channelId: channelId);
+              },
+            ),
+            GoRoute(
+              path: ':id',
+              builder: (context, state) {
+                final id = state.uri.pathSegments.isNotEmpty
+                    ? state.uri.pathSegments.last
+                    : '';
+                return AppDetailScreen(appId: id);
+              },
+            ),
+            GoRoute(
+              path: 'log',
+              builder: (context, state) {
+                final workoutPlanId =
+                    state.uri.queryParameters['workoutPlanId'] ?? '';
+                List<Map<String, dynamic>> exercises = [];
+                final extra = state.extra;
+                if (extra is Map<String, dynamic> &&
+                    extra['exercises'] is List) {
+                  exercises = List<Map<String, dynamic>>.from(
+                      extra['exercises'] as List);
+                } else if (extra is List) {
+                  exercises = List<Map<String, dynamic>>.from(extra);
+                }
+                return WorkoutLogScreen(
+                    workoutPlanId: workoutPlanId, exercises: exercises);
+              },
+            ),
+          ],
+        ),
+        GoRoute(
+          path: 'water-tracker',
+          builder: (context, state) => const WaterTrackerScreen(),
+        ),
+        GoRoute(
+          path: 'comprehensive-dashboard',
+          builder: (context, state) => const ComprehensiveDashboardScreen(),
+        ),
+        GoRoute(
+          path: 'enhanced-analytics',
+          builder: (context, state) => const EnhancedAnalyticsScreen(),
+        ),
+        GoRoute(
+          path: 'weekly-progress',
+          builder: (context, state) => const WeeklyProgressScreen(),
+        ),
+        GoRoute(
+          path: 'chatbot',
+          builder: (context, state) => const ChatbotScreen(),
+        ),
+        GoRoute(
+          path: 'nutrition-log-snap',
+          builder: (context, state) => const NutritionLogWithSnapScreen(),
+        ),
+        GoRoute(
+          path: 'nutrition-log',
+          builder: (context, state) => const NutritionLogScreen(),
+        ),
+        GoRoute(
+          path: 'meal-planner',
+          builder: (context, state) => const AIMealPlannerScreen(),
+        ),
+        GoRoute(
+          path: 'nutrition',
+          builder: (context, state) => const NutritionHubScreen(),
+        ),
+        GoRoute(
+          path: 'grocery-list',
+          builder: (context, state) => const GroceryListScreen(),
+        ),
+        GoRoute(
+          path: 'fasting-mode',
+          builder: (context, state) => const FastingModeScreen(),
+        ),
+        GoRoute(
+          path: 'achievements',
+          builder: (context, state) => const AchievementsScreen(),
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/mind',
+      builder: (context, state) => const AuthGate(child: MindScreen()),
+      routes: [
+        GoRoute(
+          path: 'mood-log',
+          builder: (context, state) => const QuickLogScreen(),
+        ),
+        GoRoute(
+          path: 'cbt-journal',
+          builder: (context, state) => const CBTJournalScreen(),
+        ),
+        GoRoute(
+          path: 'mood-timeline',
+          builder: (context, state) => const MoodTimelineScreen(),
+        ),
+        GoRoute(
+          path: 'mood-correlation',
+          builder: (context, state) => const MoodCorrelationScreen(),
+        ),
+        GoRoute(
+          path: 'mood-coach',
+          builder: (context, state) => const MoodCoachScreen(),
+        ),
+        GoRoute(
+          path: 'guided-sessions',
+          builder: (context, state) => const GuidedSessionsScreen(),
+        ),
+        GoRoute(
+          path: 'sos-mode',
+          builder: (context, state) => const SOSModeScreen(),
+        ),
+        GoRoute(
+          path: 'assessments',
+          builder: (context, state) => const AssessmentsScreen(),
+        ),
+        GoRoute(
+          path: 'results',
+          builder: (context, state) => const ResultsScreen(),
+        ),
+        GoRoute(
+          path: 'coach-inbox',
+          builder: (context, state) => const CoachInboxScreen(),
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/spirit',
+      builder: (context, state) => const AuthGate(child: SpiritScreen()),
+      routes: [
+        GoRoute(
+          path: 'daily-practice',
+          builder: (context, state) => const DailyPracticeScreen(),
+        ),
+        // Wisdom section routes
+        GoRoute(
+          path: 'wisdom-daily',
+          builder: (context, state) => const DailyWisdomScreen(),
+        ),
+        GoRoute(
+          path: 'wisdom-library',
+          builder: (context, state) => const WisdomLibraryScreen(),
+        ),
+        GoRoute(
+          path: 'wisdom-legends',
+          builder: (context, state) => const WisdomLegendsScreen(),
+        ),
+        GoRoute(
+          path: 'wisdom/:id',
+          builder: (context, state) {
+            // Some go_router versions expose params differently; to be
+            // resilient we parse the id from the URI path segments.
+            final segments = state.uri.pathSegments;
+            final id = segments.isNotEmpty ? segments.last : '';
+            return WisdomDetailScreen(wisdomId: id);
+          },
+        ),
+        GoRoute(
+          path: 'wisdom-tracker',
+          builder: (context, state) => const WisdomTrackerScreen(),
+        ),
+        GoRoute(
+          path: 'mantras',
+          builder: (context, state) => const MantrasLibraryScreen(),
+        ),
+        GoRoute(
+          path: 'audio-player',
+          builder: (context, state) => const AudioVersePlayerScreen(),
+        ),
+        GoRoute(
+          path: 'rituals',
+          builder: (context, state) => const RitualsTrackerScreen(),
+        ),
+        GoRoute(
+          path: 'calendar',
+          builder: (context, state) => const CalendarViewScreen(),
+        ),
+        GoRoute(
+          path: 'wisdom-feed',
+          builder: (context, state) => const WisdomFeedScreen(),
+        ),
+        GoRoute(
+          path: 'streaks',
+          builder: (context, state) => const StreaksDetailScreen(),
+        ),
+        GoRoute(
+          path: 'yoga',
+          builder: (context, state) => const YogaRoutineScreen(),
+        ),
+        // Spiritual module
+        GoRoute(
+          path: 'spirit',
+          builder: (context, state) => const SpiritHomeScreen(),
+          routes: [
+            GoRoute(
+              path: ':id',
+              builder: (context, state) {
+                // handle id via path segment
+                final id = state.uri.pathSegments.isNotEmpty
+                    ? state.uri.pathSegments.last
+                    : '';
+                // We will fetch the AppItem in the detail screen via a simple lookup - but here map minimal
+                // For now, pass a placeholder; the AppDetailScreen expects an AppItem instance, so we'll fetch directly in the screen in future iterations.
+                return const ProfilePersonalizationScreen();
+              },
+            ),
+            GoRoute(
+              path: 'meditation',
+              builder: (context, state) => const MeditationTrackerScreen(),
+            ),
+            GoRoute(
+              path: 'journal',
+              builder: (context, state) => const JournalScreen(),
+            ),
+            GoRoute(
+              path: 'media',
+              builder: (context, state) => const MediaLibraryScreen(),
+            ),
+            GoRoute(
+              path: 'astrology',
+              builder: (context, state) => const AstrologyScreen(),
+            ),
+            GoRoute(
+              path: 'planner',
+              builder: (context, state) => const PlannerScreen(),
+            ),
+            GoRoute(
+              path: 'profile',
+              builder: (context, state) => const ProfilePersonalizationScreen(),
+            ),
+          ],
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const AuthGate(child: ProfileScreen()),
+      routes: [
+        GoRoute(
+          path: 'theme',
+          builder: (context, state) => const ThemeSettingsScreen(),
+        ),
+        GoRoute(
+          path: 'notifications',
+          builder: (context, state) => const NotificationsSettingsScreen(),
+        ),
+        GoRoute(
+          path: 'privacy',
+          builder: (context, state) => const PrivacySettingsScreen(),
+        ),
+        GoRoute(
+          path: 'devices',
+          builder: (context, state) => const ConnectedDevicesScreen(),
+        ),
+      ],
+    ),
+    // Agent routes
+    GoRoute(
+      path: '/agent/chat',
+      builder: (context, state) => const AuthGate(child: AgentChatScreen()),
+    ),
+    GoRoute(
+      path: '/agent/overlay',
+      builder: (context, state) {
+        final sessionType = state.uri.queryParameters['type'];
+        final sessionTitle = state.uri.queryParameters['title'];
+        return AgentCoachOverlay(
+          sessionType: sessionType,
+          sessionTitle: sessionTitle,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/agent/voice',
+      builder: (context, state) => const AuthGate(child: AgentVoiceScreen()),
+    ),
+    GoRoute(
+      path: '/agent/posture',
+      builder: (context, state) => const AuthGate(child: AgentPostureCameraScreen()),
+    ),
+    // Agentic feature routes
+    GoRoute(
+      path: '/agent/energy-pulse',
+      builder: (context, state) => const AuthGate(child: EnergyPulseScreen()),
+    ),
+    GoRoute(
+      path: '/agent/karma',
+      builder: (context, state) => const AuthGate(child: KarmaTrackerScreen()),
+    ),
+    GoRoute(
+      path: '/agent/dreams',
+      builder: (context, state) => const AuthGate(child: DreamAnalyzerScreen()),
+    ),
+    GoRoute(
+      path: '/agent/spiritual-fitness',
+      builder: (context, state) => const AuthGate(child: SpiritualFitnessScreen()),
+    ),
+    GoRoute(
+      path: '/agent/bond-level',
+      builder: (context, state) => const AuthGate(child: BondLevelScreen()),
+    ),
+  ],
+);
